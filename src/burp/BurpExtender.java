@@ -16,7 +16,7 @@ import javax.swing.*;
 
 public class BurpExtender implements IBurpExtender {
     private static final String name = "Backslash Powered Scanner";
-    private static final String version = "0.91";
+    private static final String version = "1.0";
 
     @Override
     public void registerExtenderCallbacks(final IBurpExtenderCallbacks callbacks) {
@@ -45,16 +45,7 @@ public class BurpExtender implements IBurpExtender {
         callbacks.registerContextMenuFactory(new OfferParamGuess(callbacks));
 
         Utilities.out("Loaded " + name + " v" + version);
-        Utilities.out("Debug mode: " + Utilities.DEBUG);
-        Utilities.out("Thorough mode: " + Utilities.THOROUGH_MODE);
-        Utilities.out("Input transformation detection: " + Utilities.TRANSFORMATION_SCAN);
-        Utilities.out("Suspicious input handling detection: " + Utilities.DIFFING_SCAN);
-        Utilities.out("    TRY_SYNTAX_ATTACKS "+Utilities.TRY_SYNTAX_ATTACKS);
-        Utilities.out("    TRY_VALUE_PRESERVING_ATTACKS "+Utilities.TRY_VALUE_PRESERVING_ATTACKS);
-        Utilities.out("    TRY_EXPERIMENTAL_CONCAT_ATTACKS "+Utilities.TRY_EXPERIMENTAL_CONCAT_ATTACKS);
-        Utilities.out("    TRY_HPP "+Utilities.TRY_HPP);
-        Utilities.out("    TRY_HPP_FOLLOWUP "+Utilities.TRY_HPP_FOLLOWUP);
-        Utilities.out("    TRY_MAGIC_VALUE_ATTACKS "+Utilities.TRY_MAGIC_VALUE_ATTACKS);
+        SwingUtilities.invokeLater(new ConfigMenu());
 
     }
 
@@ -95,7 +86,7 @@ class FastScan implements IScannerCheck, IExtensionStateListener {
     public List<IScanIssue> doActiveScan(IHttpRequestResponse baseRequestResponse, IScannerInsertionPoint insertionPoint) {
 
         ArrayList<IScanIssue> issues = new ArrayList<>();
-        if(!(Utilities.TRANSFORMATION_SCAN || Utilities.DIFFING_SCAN)) {
+        if(!(Utilities.globalSettings.getBoolean("try transformation scan") || Utilities.globalSettings.getBoolean("try diffing scan"))) {
             Utilities.out("Aborting scan - all scanner checks disabled");
             return issues;
         }
@@ -106,11 +97,11 @@ class FastScan implements IScannerCheck, IExtensionStateListener {
             insertionPoint = new ParamInsertionPoint(baseRequestResponse.getRequest(), baseParam.getName(), baseParam.getValue(), baseParam.getType());
         }
 
-        if (Utilities.TRANSFORMATION_SCAN) {
+        if (Utilities.globalSettings.getBoolean("try transformation scan")) {
             issues.add(transformationScan.findTransformationIssues(baseRequestResponse, insertionPoint));
         }
 
-        if (Utilities.DIFFING_SCAN) {
+        if (Utilities.globalSettings.getBoolean("try diffing scan")) {
             issues.add(diffingScan.findReflectionIssues(baseRequestResponse, insertionPoint));
         }
 
@@ -124,11 +115,11 @@ class FastScan implements IScannerCheck, IExtensionStateListener {
             IScannerInsertionPoint arrayInsertionPoint = new ParamInsertionPoint(newReq, param_name, newParam.getValue(), newParam.getType());
             IHttpRequestResponse newBase = callbacks.makeHttpRequest(baseRequestResponse.getHttpService(), arrayInsertionPoint.buildRequest(newParam.getValue().getBytes()));
 
-            if (Utilities.TRANSFORMATION_SCAN) {
+            if (Utilities.globalSettings.getBoolean("try transformation scan")) {
                 issues.add(transformationScan.findTransformationIssues(newBase, arrayInsertionPoint));
             }
 
-            if (Utilities.DIFFING_SCAN) {
+            if (Utilities.globalSettings.getBoolean("try diffing scan")) {
                 issues.add(diffingScan.findReflectionIssues(newBase, arrayInsertionPoint));
             }
         }

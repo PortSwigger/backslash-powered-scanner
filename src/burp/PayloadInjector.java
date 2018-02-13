@@ -45,7 +45,7 @@ class PayloadInjector {
 
         Attack tempDoNotBreakAttack = doNotBreakAttackSeed;
 
-        for(int i=0; i<Utilities.CONFIRMATIONS; i++) {
+        for(int i=0; i<Utilities.globalSettings.getInt("confirmations"); i++) {
             Attack tempBreakAttack = buildAttackFromProbe(probe, probe.getNextBreak());
             mergedBreakAttack.addAttack(tempBreakAttack);
 

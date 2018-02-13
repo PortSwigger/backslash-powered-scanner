@@ -4,28 +4,217 @@ import org.apache.commons.lang3.CharUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 
+import javax.swing.*;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
+import javax.swing.text.NumberFormatter;
+import java.awt.*;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.text.NumberFormat;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static burp.Utilities.getBurpFrame;
+
+class ConfigMenu implements Runnable, MenuListener, IExtensionStateListener{
+    private JMenu menuButton;
+
+    ConfigMenu() {
+        Utilities.callbacks.registerExtensionStateListener(this);
+    }
+
+    public void run()
+    {
+        menuButton = new JMenu("Backslash");
+        menuButton.addMenuListener(this);
+        JMenuBar burpMenuBar = getBurpFrame().getJMenuBar();
+        burpMenuBar.add(menuButton);
+    }
+
+    public void menuSelected(MenuEvent e) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run(){
+                Utilities.globalSettings.showSettings();
+            }
+        });
+    }
+
+    public void menuDeselected(MenuEvent e) { }
+
+    public void menuCanceled(MenuEvent e) { }
+
+    public void extensionUnloaded() {
+        getBurpFrame().getJMenuBar().remove(menuButton);
+    }
+}
+
+class ConfigurableSettings {
+    private LinkedHashMap<String, String> settings;
+    private NumberFormatter onlyInt;
+
+    ConfigurableSettings() {
+        settings = new LinkedHashMap<>();
+
+        put("thorough mode", false);
+        put("confirmations", 8);
+        put("debug", false);
+        put("try transformation scan", false);
+        put("try diffing scan", true);
+        put("diff: HPP", true);
+        put("diff: HPP auto-followup", false);
+        put("diff: syntax attacks", true);
+        put("diff: value preserving attacks", true);
+        put("diff: experimental concat attacks", false);
+        put("diff: magic value attacks", true);
+
+
+        for(String key: settings.keySet()) {
+            //Utilities.callbacks.saveExtensionSetting(key, null); // purge saved settings
+            String value = Utilities.callbacks.loadExtensionSetting(key);
+            if (Utilities.callbacks.loadExtensionSetting(key) != null) {
+                putRaw(key, value);
+            }
+        }
+
+        NumberFormat format = NumberFormat.getInstance();
+        onlyInt = new NumberFormatter(format);
+        onlyInt.setValueClass(Integer.class);
+        onlyInt.setMinimum(-1);
+        onlyInt.setMaximum(Integer.MAX_VALUE);
+        onlyInt.setAllowsInvalid(false);
+
+    }
+
+    private ConfigurableSettings(ConfigurableSettings base) {
+        settings = new LinkedHashMap<>(base.settings);
+        onlyInt = base.onlyInt;
+    }
+
+    void printSettings() {
+        for(String key: settings.keySet()) {
+            Utilities.out(key + ": "+settings.get(key));
+        }
+    }
+
+    private String encode(Object value) {
+        String encoded;
+        if (value instanceof Boolean) {
+            encoded = String.valueOf(value);
+        }
+        else if (value instanceof Integer) {
+            encoded = String.valueOf(value);
+        }
+        else {
+            encoded = "\"" + ((String) value).replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+        }
+        return encoded;
+    }
+
+    private void putRaw(String key, String value) {
+        settings.put(key, value);
+    }
+
+    private void put(String key, Object value) {
+        settings.put(key, encode(value));
+    }
+
+    String getString(String key) {
+        String decoded = settings.get(key);
+        decoded = decoded.substring(1, decoded.length()-1).replace("\\\"", "\"").replace("\\\\", "\\");
+        return decoded;
+    }
+
+    int getInt(String key) {
+        return Integer.parseInt(settings.get(key));
+    }
+
+    boolean getBoolean(String key) {
+        String val = settings.get(key);
+        if (val.equals("true") ) {
+            return true;
+        }
+        else if (val.equals("false")){
+            return false;
+        }
+        throw new RuntimeException();
+    }
+
+    String getType(String key) {
+        String val = settings.get(key);
+        if (val.equals("true") || val.equals("false")) {
+            return "boolean";
+        }
+        else if (val.startsWith("\"")) {
+            return "string";
+        }
+        else {
+            return "number";
+        }
+    }
+
+    ConfigurableSettings showSettings() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(0, 2));
+
+        HashMap<String, Object> configured = new HashMap<>();
+
+        for(String key: settings.keySet()) {
+            String type = getType(key);
+            panel.add(new JLabel("\n"+key+": "));
+
+            if (type.equals("boolean")) {
+                JCheckBox box = new JCheckBox();
+                box.setSelected(getBoolean(key));
+                panel.add(box);
+                configured.put(key, box);
+            }
+            else if (type.equals("number")){
+                JTextField box = new JFormattedTextField(onlyInt);
+                box.setText(String.valueOf(getInt(key)));
+                panel.add(box);
+                configured.put(key, box);
+            }
+            else {
+                JTextField box = new JTextField(getString(key));
+                panel.add(box);
+                configured.put(key, box);
+            }
+        }
+
+        int result = JOptionPane.showConfirmDialog(Utilities.getBurpFrame(), panel, "Backslash Powered Scanner Config", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result == JOptionPane.OK_OPTION) {
+            for(String key: configured.keySet()) {
+                Object val = configured.get(key);
+                if (val instanceof JCheckBox) {
+                    val = ((JCheckBox) val).isSelected();
+                }
+                else if (val instanceof JFormattedTextField) {
+                    val = Integer.parseInt(((JTextField) val).getText());
+                }
+                else {
+                    val = ((JTextField) val).getText();
+                }
+                put(key, val);
+                Utilities.callbacks.saveExtensionSetting(key, encode(val));
+            }
+
+            return new ConfigurableSettings(this);
+        }
+
+        return null;
+    }
+
+
+
+}
 
 class Utilities {
 
     private static PrintWriter stdout;
     private static PrintWriter stderr;
-    static final boolean THOROUGH_MODE = false;
-    static final boolean DEBUG = false;
-    static final boolean TRANSFORMATION_SCAN = false;
-    static final boolean DIFFING_SCAN = true;
-    static final byte CONFIRMATIONS = 8;
     static AtomicBoolean unloaded = new AtomicBoolean(false);
-
-    static final boolean TRY_HPP = true;
-    static final boolean TRY_HPP_FOLLOWUP = false;
-    static final boolean TRY_SYNTAX_ATTACKS = true;
-    static final boolean TRY_VALUE_PRESERVING_ATTACKS = true;
-    static final boolean TRY_EXPERIMENTAL_CONCAT_ATTACKS = false;
-    static final boolean TRY_MAGIC_VALUE_ATTACKS = true;
 
     static IBurpExtenderCallbacks callbacks;
     static IExtensionHelpers helpers;
@@ -36,11 +225,16 @@ class Utilities {
     private static final String START_CHARSET = "ghijklmnopqrstuvwxyz";
     static Random rnd = new Random();
 
+    static ConfigurableSettings globalSettings;
+
     Utilities(final IBurpExtenderCallbacks incallbacks) {
         callbacks = incallbacks;
         stdout = new PrintWriter(callbacks.getStdout(), true);
         stderr = new PrintWriter(callbacks.getStderr(), true);
         helpers = callbacks.getHelpers();
+
+        globalSettings = new ConfigurableSettings();
+        globalSettings.printSettings();
 
         Scanner s = new Scanner(getClass().getResourceAsStream("/functions"));
         while (s.hasNext()) {
@@ -53,6 +247,18 @@ class Utilities {
             paramNames.add(params.next());
         }
         params.close();
+    }
+
+    static JFrame getBurpFrame()
+    {
+        for(Frame f : Frame.getFrames())
+        {
+            if(f.isVisible() && f.getTitle().startsWith(("Burp Suite")))
+            {
+                return (JFrame) f;
+            }
+        }
+        return null;
     }
 
     static String randomString(int len) {
@@ -71,7 +277,7 @@ class Utilities {
     }
 
     static void log(String message) {
-        if (DEBUG) {
+        if (Utilities.globalSettings.getBoolean("debug")) {
             stdout.println(message);
         }
     }

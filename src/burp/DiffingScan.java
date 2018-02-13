@@ -66,14 +66,14 @@ class DiffingScan {
 
         ArrayList<Attack> results = new ArrayList<>();
 
-        if (Utilities.TRY_HPP) {
+        if (Utilities.globalSettings.getBoolean("diff: HPP")) {
             Probe backendParameterInjection = new Probe("Backend Parameter Injection", 2, "$zq=%3c%61%60%27%22%24%7b%7b%5c&zq%3d", "|zq=%3c%61%60%27%22%24%7b%7b%5c", "!zq=%3c%61%60%27%22%24%7b%7b%5c");
             backendParameterInjection.setEscapeStrings("&zq=%3c%61%60%27%22%24%7b%7b%5c", "&zq=x%3c%61%60%27%22%24%7b%7b%5c"); // "#zq=%3c%61%60%27%22%24%7b%7b%5c"
             backendParameterInjection.setRandomAnchor(false);
             backendParameterInjection.setTip("To scan for backend parameters, right click on the attached request and select 'Identify Backend Parameters'. This option may not be available for non-standard parameters. Scan progress is visible in this extension's output tab, and new scanner issues will be created for any parameters identified.");
             ArrayList<Attack> backendParameterAttack = injector.fuzz(softBase, backendParameterInjection);
             results.addAll(backendParameterAttack);
-            if (Utilities.TRY_HPP_FOLLOWUP && !backendParameterAttack.isEmpty()) {
+            if (Utilities.globalSettings.getBoolean("diff: HPP auto-followup") && !backendParameterAttack.isEmpty()) {
                 results.addAll(ParamGuesser.guessParams(baseRequestResponse, insertionPoint));
             }
 
@@ -100,16 +100,16 @@ class DiffingScan {
             hardBase.addAttack(injector.buildAttack("", true));
         }
 
-        if (Utilities.TRY_SYNTAX_ATTACKS && !Utilities.verySimilar(hardBase, crudeFuzz)) {
+        if (Utilities.globalSettings.getBoolean("diff: syntax attacks") && !Utilities.verySimilar(hardBase, crudeFuzz)) {
 
             boolean worthTryingInjections = false;
-            if (!Utilities.THOROUGH_MODE) {
+            if (!Utilities.globalSettings.getBoolean("thorough mode")) {
                 Probe multiFuzz = new Probe("Basic fuzz", 0, "`z'z\"\\", "\\z`z'z\"\\");
                 multiFuzz.addEscapePair("\\`z\\'z\\\"\\\\", "\\`z''z\\\"\\\\");
                 worthTryingInjections = !injector.fuzz(hardBase, multiFuzz).isEmpty();
             }
 
-            if( Utilities.THOROUGH_MODE || worthTryingInjections) {
+            if( Utilities.globalSettings.getBoolean("thorough mode") || worthTryingInjections) {
                 ArrayList<String> potential_delimiters = new ArrayList<>();
 
                 // find the encapsulating quote type: ` ' "
@@ -270,9 +270,9 @@ class DiffingScan {
         }
 
         // does a request w/random input differ from the base request? (ie 'should I do soft attacks?')
-        if (Utilities.TRY_VALUE_PRESERVING_ATTACKS && !Utilities.verySimilar(softBase, hardBase)) {
+        if (Utilities.globalSettings.getBoolean("diff: value preserving attacks") && !Utilities.verySimilar(softBase, hardBase)) {
 
-            if (Utilities.TRY_EXPERIMENTAL_CONCAT_ATTACKS && Utilities.THOROUGH_MODE) {
+            if (Utilities.globalSettings.getBoolean("diff: experimental concat attacks") && Utilities.globalSettings.getBoolean("thorough mode")) {
                 String[] potential_delimiters = {"'", "\""};
                 String[] concatenators = {"||", "+", " ", "."};
                 ArrayList<String[]> injectionSequence = new ArrayList<>();
@@ -391,7 +391,7 @@ class DiffingScan {
             boolean isInPath = (type == IScannerInsertionPoint.INS_URL_PATH_FILENAME ||
                                 type == IScannerInsertionPoint.INS_URL_PATH_FOLDER);
 
-            if (Utilities.THOROUGH_MODE && !isInPath && Utilities.mightBeIdentifier(baseValue) && !baseValue.equals("")) {
+            if (Utilities.globalSettings.getBoolean("thorough mode") && !isInPath && Utilities.mightBeIdentifier(baseValue) && !baseValue.equals("")) {
                 Probe dotSlash = new Probe("File Path Manipulation", 3, "../", "z/", "_/", "./../");
                 dotSlash.setEscapeStrings("./", "././", "./././");
                 dotSlash.setRandomAnchor(false);
@@ -407,7 +407,7 @@ class DiffingScan {
                 }
             }
 
-            if (Utilities.TRY_MAGIC_VALUE_ATTACKS) {
+            if (Utilities.globalSettings.getBoolean("diff: magic value attacks")) {
 
                 String[] magicValues = new String[]{"undefined", "null", "empty", "none"};
                 for (String magicValue: magicValues) {
@@ -430,7 +430,7 @@ class DiffingScan {
                     results.addAll(injector.fuzz(hardBase, magic));
                 }
 
-                if((!Utilities.THOROUGH_MODE && Utilities.mightBeIdentifier(baseValue)) || (Utilities.THOROUGH_MODE && Utilities.mightBeFunction(baseValue))) {
+                if((!Utilities.globalSettings.getBoolean("thorough mode") && Utilities.mightBeIdentifier(baseValue)) || (Utilities.globalSettings.getBoolean("thorough mode") && Utilities.mightBeFunction(baseValue))) {
                     Probe functionCall = new Probe("Function hijacking", 6, "sprimtf", "sprintg", "exception", "malloc");
                     functionCall.setEscapeStrings("sprintf");
                     functionCall.setPrefix(Probe.REPLACE);
