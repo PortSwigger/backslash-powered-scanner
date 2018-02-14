@@ -46,7 +46,9 @@ class ConfigMenu implements Runnable, MenuListener, IExtensionStateListener{
     public void menuCanceled(MenuEvent e) { }
 
     public void extensionUnloaded() {
-        getBurpFrame().getJMenuBar().remove(menuButton);
+        JMenuBar burpMenuBar = getBurpFrame().getJMenuBar();
+        burpMenuBar.remove(menuButton);
+        burpMenuBar.repaint();
     }
 }
 

@@ -6,6 +6,9 @@ For more information, please refer to the whitepaper at http://blog.portswigger.
 The code can be found at https://github.com/portswigger/backslash-powered-scanner Contributions and feature requests are welcome.
 
 # Changelog
+**1.0 20180214**
+ - Provide a configuration dialog
+
 **0.91 20170612**
  - Detect alternative code paths triggered by keywords like 'null', 'undefined' etc
  
