@@ -70,6 +70,7 @@ class ConfigurableSettings {
         put("diff: value preserving attacks", true);
         put("diff: experimental concat attacks", false);
         put("diff: magic value attacks", true);
+        put("diff: magic values", "undefined,null,empty,none,COM1");
 
 
         for(String key: settings.keySet()) {
@@ -329,6 +330,29 @@ class Utilities {
 
     static boolean mightBeFunction(String value) {
         return phpFunctions.contains(value);
+    }
+
+    static boolean isInPath(IScannerInsertionPoint insertionPoint) {
+        byte type = insertionPoint.getInsertionPointType();
+        boolean isInPath = (type == IScannerInsertionPoint.INS_URL_PATH_FILENAME ||
+                type == IScannerInsertionPoint.INS_URL_PATH_FOLDER);
+
+        if (!isInPath && type == IScannerInsertionPoint.INS_USER_PROVIDED) {
+            final String injectionCanary = "zxcvcxz";
+            String path = Utilities.getPathFromRequest(insertionPoint.buildRequest(injectionCanary.getBytes()));
+            if (path.contains(injectionCanary)) {
+                if (path.contains("?")) {
+                    if (path.indexOf(injectionCanary) < path.indexOf("?")) {
+                        isInPath = true;
+                    }
+                }
+                else {
+                    isInPath = true;
+                }
+            }
+        }
+
+        return isInPath;
     }
 
     // records from the first space to the second space

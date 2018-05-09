@@ -387,9 +387,8 @@ class DiffingScan {
                 }
             }
 
-            byte type = insertionPoint.getInsertionPointType();
-            boolean isInPath = (type == IScannerInsertionPoint.INS_URL_PATH_FILENAME ||
-                                type == IScannerInsertionPoint.INS_URL_PATH_FOLDER);
+
+            boolean isInPath = Utilities.isInPath(insertionPoint);
 
             if (Utilities.globalSettings.getBoolean("thorough mode") && !isInPath && Utilities.mightBeIdentifier(baseValue) && !baseValue.equals("")) {
                 Probe dotSlash = new Probe("File Path Manipulation", 3, "../", "z/", "_/", "./../");
@@ -409,14 +408,19 @@ class DiffingScan {
 
             if (Utilities.globalSettings.getBoolean("diff: magic value attacks")) {
 
-                String[] magicValues = new String[]{"undefined", "null", "empty", "none", "aux"};
+                String[] magicValues = Utilities.globalSettings.getString("diff: magic values").split(",");
+
                 for (String magicValue: magicValues) {
                     if (baseValue.equals(magicValue)) {
                         continue;
                     }
 
+                    if(magicValue.equals("COM1") && isInPath) {
+                        continue;
+                    }
+
                     String[] corruptedMagic = new String[5];
-                    for (int i=0;i<4;i++) {
+                    for (int i=0;i<4 && i+2 < baseValue.length(); i++) {
                         StringBuilder corruptor = new StringBuilder(magicValue);
                         corruptor.setCharAt(i, 'z');
                         corruptedMagic[i] = corruptor.toString();

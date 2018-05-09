@@ -6,6 +6,11 @@ For more information, please refer to the whitepaper at http://blog.portswigger.
 The code can be found at https://github.com/portswigger/backslash-powered-scanner Contributions and feature requests are welcome.
 
 # Changelog
+**1.01 20180509**
+ - Add 'COM1' Windows reserved filename to magic value attacks
+ - Support custom magic value attacks
+ - Don't attempt filepath related attacks in the request path
+ 
 **1.0 20180214**
  - Provide a configuration dialog
 
