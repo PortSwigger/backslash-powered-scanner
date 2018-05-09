@@ -409,7 +409,7 @@ class DiffingScan {
 
             if (Utilities.globalSettings.getBoolean("diff: magic value attacks")) {
 
-                String[] magicValues = new String[]{"undefined", "null", "empty", "none"};
+                String[] magicValues = new String[]{"undefined", "null", "empty", "none", "aux"};
                 for (String magicValue: magicValues) {
                     if (baseValue.equals(magicValue)) {
                         continue;
