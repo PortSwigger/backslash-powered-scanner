@@ -70,7 +70,7 @@ class ConfigurableSettings {
         put("diff: value preserving attacks", true);
         put("diff: experimental concat attacks", false);
         put("diff: magic value attacks", true);
-        put("diff: magic values", "undefined,null,empty,none,COM1");
+        put("diff: magic values", "undefined,null,empty,none,COM1,c!C123449477,aA1537368460!");
 
 
         for(String key: settings.keySet()) {
