@@ -84,6 +84,7 @@ class PayloadInjector {
 
 
     private Attack buildAttackFromProbe(Probe probe, String payload) {
+        if(payload == null) payload=""; //Null safe
         boolean randomAnchor = probe.getRandomAnchor();
         byte prefix = probe.getPrefix();
 
@@ -123,7 +124,7 @@ class PayloadInjector {
         byte[] request = insertionPoint.buildRequest(payload.getBytes());
 
         if (needCacheBuster) {
-            IParameter cacheBuster = burp.Utilities.helpers.buildParameter(Utilities.generateCanary(), "1", IParameter.PARAM_URL);
+            IParameter cacheBuster = burp.Utilities.helpers.buildParameter(Utilities.generateCanary(), "1", IParameter.PARAM_BODY);
             request = burp.Utilities.helpers.addParameter(request, cacheBuster);
         }
 
