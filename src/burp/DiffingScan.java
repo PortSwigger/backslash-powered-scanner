@@ -420,9 +420,9 @@ class DiffingScan {
                     }
 
                     String[] corruptedMagic = new String[5];
-                    for (int i=0;i<4 && i+2 < baseValue.length(); i++) {
+                    for (int i=0;i<4; i++) {
                         StringBuilder corruptor = new StringBuilder(magicValue);
-                        corruptor.setCharAt(i, 'z');
+                        corruptor.setCharAt(i % baseValue.length(), 'z');
                         corruptedMagic[i] = corruptor.toString();
                     }
                     corruptedMagic[4] = "help"; // send a real word to filter out things like usernames and hostnames where 'null' is plausible
