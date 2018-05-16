@@ -124,7 +124,7 @@ class PayloadInjector {
         byte[] request = insertionPoint.buildRequest(payload.getBytes());
 
         if (needCacheBuster) {
-            IParameter cacheBuster = burp.Utilities.helpers.buildParameter(Utilities.generateCanary(), "1", IParameter.PARAM_BODY);
+            IParameter cacheBuster = burp.Utilities.helpers.buildParameter(Utilities.generateCanary(), "1", IParameter.PARAM_URL);
             request = burp.Utilities.helpers.addParameter(request, cacheBuster);
         }
 

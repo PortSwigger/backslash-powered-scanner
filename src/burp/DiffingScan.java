@@ -22,6 +22,8 @@ class DiffingScan {
 
         functions.add(new String[]{"JavaScript injection", "isFinite(1)", "isFinitd(1)", "isFinitee(1)"});
         functions.add(new String[]{"Shell injection", "$((10/10))", "$((10/00))", "$((1/0))"});
+        functions.add(new String[]{"SpEL injection", "${10-1}", "${10/0}", "${10/00}"});
+        functions.add(new String[]{"Expression in index", "[10/10]", "[10/00]", "[1/0]"});
         functions.add(new String[]{"Basic function injection", "abs(1)", "abz(1)", "abf(1)"});
 
         if (!useRandomAnchor) {
@@ -324,6 +326,7 @@ class DiffingScan {
             /* this is the simplest payload set and could be used as a template */
 
             // if the input X looks like a number
+            boolean hasTestedDividedByZero = false;
             if (StringUtils.isNumeric(baseValue)) {
 
                 // compare the results of appending /0 and /1
@@ -344,7 +347,11 @@ class DiffingScan {
 
                     // if *that* worked, try injecting a function call
                     results.addAll(exploreAvailableFunctions(injector, softBase, "/", "", false));
+                    hasTestedDividedByZero = true;
                 }
+            }
+            if(!hasTestedDividedByZero && Utilities.globalSettings.getBoolean("thorough mode")) { //Test division by zero even for value that are not numeric
+                results.addAll(exploreAvailableFunctions(injector, softBase, "", "", false));
             }
 
             if (Utilities.mightBeOrderBy(insertionPoint.getInsertionPointName(), baseValue)) {

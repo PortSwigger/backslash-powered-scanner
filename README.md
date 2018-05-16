@@ -5,6 +5,12 @@ For more information, please refer to the whitepaper at http://blog.portswigger.
 
 The code can be found at https://github.com/portswigger/backslash-powered-scanner Contributions and feature requests are welcome.
 
+# Building the extension
+
+```
+$ gradle fatJar
+```
+
 # Changelog
 **1.01 20180509**
  - Add 'COM1' Windows reserved filename to magic value attacks
