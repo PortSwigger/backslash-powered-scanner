@@ -101,7 +101,7 @@ class DiffingScan {
         }
 
         if (Utilities.globalSettings.getBoolean("diff: syntax attacks") && !Utilities.verySimilar(hardBase, crudeFuzz)) {
-
+            
             boolean worthTryingInjections = false;
             if (!Utilities.globalSettings.getBoolean("thorough mode")) {
                 Probe multiFuzz = new Probe("Basic fuzz", 0, "`z'z\"\\", "\\z`z'z\"\\");

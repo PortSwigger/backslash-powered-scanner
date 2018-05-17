@@ -61,6 +61,7 @@ class ConfigurableSettings {
 
         put("thorough mode", false);
         put("confirmations", 8);
+        put("encode everything", false);
         put("debug", false);
         put("try transformation scan", false);
         put("try diffing scan", true);
@@ -226,6 +227,9 @@ class Utilities {
 
     private static final String CHARSET = "0123456789abcdefghijklmnopqrstuvwxyz"; // ABCDEFGHIJKLMNOPQRSTUVWXYZ
     private static final String START_CHARSET = "ghijklmnopqrstuvwxyz";
+
+    static final HashSet<Character> badChars = new HashSet<>();
+
     static Random rnd = new Random();
 
     static ConfigurableSettings globalSettings;
@@ -250,6 +254,14 @@ class Utilities {
             paramNames.add(params.next());
         }
         params.close();
+
+        badChars.add('%');
+        badChars.add('\u0000');
+        badChars.add('&');
+        badChars.add('#');
+        badChars.add(';');
+        badChars.add(' ');
+        badChars.add('+');
     }
 
     static JFrame getBurpFrame()
@@ -639,7 +651,20 @@ class Utilities {
     }
 
     static String encodeParam(String payload) {
-        return payload.replace("%", "%25").replace("\u0000", "%00").replace("&", "%26").replace("#", "%23").replace("\u0020", "%20").replace(";", "%3b").replace("+", "%2b");
+
+        boolean encodeEverything = globalSettings.getBoolean("encode everything");
+        StringBuilder encoded = new StringBuilder();
+        for (char c: payload.toCharArray()) {
+            if (encodeEverything || badChars.contains(c)) {
+                encoded.append("%");
+                encoded.append(Integer.toHexString(c));
+            }
+            else {
+                encoded.append(c);
+            }
+        }
+
+        return encoded.toString();
     }
 
 
