@@ -352,8 +352,14 @@ class OfferParamGuess implements IContextMenuFactory {
     @Override
     public List<JMenuItem> createMenuItems(IContextMenuInvocation invocation) {
         List<JMenuItem> options = new ArrayList<>();
+        if (invocation.getSelectedMessages().length == 0) {
+            return options;
+        }
         IHttpRequestResponse req = invocation.getSelectedMessages()[0];
         byte[] resp = req.getRequest();
+        if (resp == null) {
+            return options;
+        }
         if (Utilities.countMatches(resp, Utilities.helpers.stringToBytes("%253c%2561%2560%2527%2522%2524%257b%257b%255c")) > 0) {
             JMenuItem probeButton = new JMenuItem("*Identify backend parameters*");
             probeButton.addActionListener(new TriggerParamGuesser(req));
