@@ -352,7 +352,7 @@ class OfferParamGuess implements IContextMenuFactory {
     @Override
     public List<JMenuItem> createMenuItems(IContextMenuInvocation invocation) {
         List<JMenuItem> options = new ArrayList<>();
-        if (invocation.getSelectedMessages().length == 0) {
+        if (invocation == null || invocation.getSelectedMessages() == null || invocation.getSelectedMessages().length == 0) {
             return options;
         }
         IHttpRequestResponse req = invocation.getSelectedMessages()[0];
