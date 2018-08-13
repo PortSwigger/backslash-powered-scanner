@@ -406,6 +406,12 @@ class DiffingScan {
                 }
             }
 
+            Probe orangeSlash = new Probe("Nginx subfolder escape", 4, "../", ".././");
+            orangeSlash.setEscapeStrings(",,/", "/../", "..x/", ".x/");
+            orangeSlash.setRandomAnchor(false);
+            orangeSlash.setPrefix(Probe.APPEND);
+            results.addAll(injector.fuzz(hardBase, orangeSlash));
+
             if (Utilities.globalSettings.getBoolean("diff: magic value attacks")) {
 
                 String[] magicValues = Utilities.globalSettings.getString("diff: magic values").split(",");
