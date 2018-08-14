@@ -406,14 +406,14 @@ class DiffingScan {
                 }
             }
 
-            Probe orangeSlash = new Probe("Nginx subfolder escape", 4, "../", ".././");
-            orangeSlash.setEscapeStrings(",,/", "/../", "..x/", ".x/");
+            Probe orangeSlash = new Probe("Nginx subfolder escape", 4, "..", "../.");
+            orangeSlash.setEscapeStrings(",,", "/..", "..x", ".x");
             orangeSlash.setRandomAnchor(false);
             orangeSlash.setPrefix(Probe.APPEND);
             results.addAll(injector.fuzz(hardBase, orangeSlash));
 
-            Probe proxyEscape = new Probe("Proxy subfolder escape", 4, "/..;/", "/..;/./");
-            proxyEscape.setEscapeStrings("/../", "/.;/", "/..:/", "/..x/");
+            Probe proxyEscape = new Probe("Proxy subfolder escape", 4, "/..;", "/..;/.");
+            proxyEscape.setEscapeStrings("/..", "/.;", "/..:", "/..x");
             proxyEscape.setRandomAnchor(false);
             proxyEscape.setPrefix(Probe.APPEND);
             results.addAll(injector.fuzz(hardBase, proxyEscape));
