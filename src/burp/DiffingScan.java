@@ -412,6 +412,12 @@ class DiffingScan {
             orangeSlash.setPrefix(Probe.APPEND);
             results.addAll(injector.fuzz(hardBase, orangeSlash));
 
+            Probe proxyEscape = new Probe("Proxy subfolder escape", 4, "/..;/", "/..;/./");
+            proxyEscape.setEscapeStrings("/../", "/.;/", "/..:/", "/..x/");
+            proxyEscape.setRandomAnchor(false);
+            proxyEscape.setPrefix(Probe.APPEND);
+            results.addAll(injector.fuzz(hardBase, proxyEscape));
+
             if (Utilities.globalSettings.getBoolean("diff: magic value attacks")) {
 
                 String[] magicValues = Utilities.globalSettings.getString("diff: magic values").split(",");
