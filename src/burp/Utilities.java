@@ -1,14 +1,14 @@
 package burp;
 
 import org.apache.commons.lang3.CharUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.*;
-import javax.swing.event.MenuEvent;
-import javax.swing.event.MenuListener;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.text.NumberFormat;
@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static burp.Utilities.getBurpFrame;
 
-class ConfigMenu implements Runnable, MenuListener, IExtensionStateListener{
+class ConfigMenu implements Runnable, IExtensionStateListener{
     private JMenu menuButton;
 
     ConfigMenu() {
@@ -28,22 +28,22 @@ class ConfigMenu implements Runnable, MenuListener, IExtensionStateListener{
     public void run()
     {
         menuButton = new JMenu("Backslash");
-        menuButton.addMenuListener(this);
+        menuButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent mouseEvent) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run(){
+                        Utilities.globalSettings.showSettings();
+                    }
+                });
+            }
+        });
+
         JMenuBar burpMenuBar = getBurpFrame().getJMenuBar();
         burpMenuBar.add(menuButton);
     }
 
-    public void menuSelected(MenuEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run(){
-                Utilities.globalSettings.showSettings();
-            }
-        });
-    }
 
-    public void menuDeselected(MenuEvent e) { }
-
-    public void menuCanceled(MenuEvent e) { }
 
     public void extensionUnloaded() {
         JMenuBar burpMenuBar = getBurpFrame().getJMenuBar();
