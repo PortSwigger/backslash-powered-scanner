@@ -6,6 +6,9 @@ For more information, please refer to the whitepaper at http://blog.portswigger.
 The code can be found at https://github.com/portswigger/backslash-powered-scanner Contributions and feature requests are welcome.
 
 # Changelog
+**1.03 20190814**
+ - Detect path normalization exploits based on Orange Tsai's research
+ 
 **1.02 20180606**
  - Add MD5/SHA-1 lax comparison to magic value attacks
  - Misc bugfixes
