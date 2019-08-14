@@ -5,6 +5,8 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.*;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -18,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static burp.Utilities.getBurpFrame;
 
-class ConfigMenu implements Runnable, IExtensionStateListener{
+class ConfigMenu implements Runnable, MenuListener, IExtensionStateListener{
     private JMenu menuButton;
 
     ConfigMenu() {
@@ -28,27 +30,27 @@ class ConfigMenu implements Runnable, IExtensionStateListener{
     public void run()
     {
         menuButton = new JMenu("Backslash");
-        menuButton.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent mouseEvent) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    public void run(){
-                        Utilities.globalSettings.showSettings();
-                    }
-                });
-            }
-        });
-
-        JMenuBar burpMenuBar = getBurpFrame().getJMenuBar();
+        menuButton.addMenuListener(this);
+        JMenuBar burpMenuBar = Utilities.getBurpFrame().getJMenuBar();
         burpMenuBar.add(menuButton);
     }
 
+    public void menuSelected(MenuEvent e) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run(){
+                Utilities.globalSettings.showSettings();
+            }
+        });
+    }
 
+    public void menuDeselected(MenuEvent e) { }
+
+    public void menuCanceled(MenuEvent e) { }
 
     public void extensionUnloaded() {
-        JMenuBar burpMenuBar = getBurpFrame().getJMenuBar();
-        burpMenuBar.remove(menuButton);
-        burpMenuBar.repaint();
+        JMenuBar jMenuBar = Utilities.getBurpFrame().getJMenuBar();
+        jMenuBar.remove(menuButton);
+        jMenuBar.repaint();
     }
 }
 
@@ -70,6 +72,7 @@ class ConfigurableSettings {
         put("diff: syntax attacks", true);
         put("diff: value preserving attacks", true);
         put("diff: experimental concat attacks", false);
+        put("diff: experimental folder attacks", false);
         put("diff: magic value attacks", true);
         put("diff: magic values", "undefined,null,empty,none,COM1,c!C123449477,aA1537368460!");
 

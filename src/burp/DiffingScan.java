@@ -406,36 +406,38 @@ class DiffingScan {
                 }
             }
 
-//            // fixme breaks on short input
-//            String firstBlat = "z"+baseValue.substring(1, baseValue.length());
-//            String lastBlat = baseValue.substring(0, baseValue.length()-1)+"z";
-//            Probe orangeSlash = new Probe("Possible Nginx alias escape", 4, baseValue+"..", baseValue+"../."); // get static 404
-//            orangeSlash.setEscapeStrings(firstBlat+"..", lastBlat+"..", baseValue+"/../xyz"); // get app 404
-//
-//            orangeSlash.setRandomAnchor(false);
-//            orangeSlash.setPrefix(Probe.REPLACE);
-//            ArrayList<Attack> orangeAttack = injector.fuzz(hardBase, orangeSlash);
-//            if (!orangeAttack.isEmpty()) {
-//                results.addAll(orangeAttack);
-//                Probe guessFolder = new Probe("Confirmed Nginx alias escape type 1", 8, baseValue+"../asdfz", baseValue+"../statik");
-//                guessFolder.setEscapeStrings(baseValue+"../static", baseValue+"../static/.");
-//                guessFolder.setRandomAnchor(false);
-//                guessFolder.setPrefix(Probe.REPLACE);
-//                results.addAll(injector.fuzz(softBase, guessFolder));
-//
-//                // fixme gets FPs on WordPress due to... prefix-matching?
-//                Probe guessFolder2 = new Probe("Confirmed Nginx alias escape type 2", 7, baseValue+"../asdfz", baseValue+"../statik");
-//                guessFolder2.setEscapeStrings(baseValue+"../"+baseValue, baseValue+"../"+baseValue+"/.");
-//                guessFolder2.setRandomAnchor(false);
-//                guessFolder2.setPrefix(Probe.REPLACE);
-//                results.addAll(injector.fuzz(softBase, guessFolder2));
-//            }
+            if (Utilities.globalSettings.getBoolean("diff: experimental folder attacks")) {
+                // fixme breaks on short input
+                String firstBlat = "z" + baseValue.substring(1, baseValue.length());
+                String lastBlat = baseValue.substring(0, baseValue.length() - 1) + "z";
+                Probe orangeSlash = new Probe("Possible Nginx alias escape", 4, baseValue + "..", baseValue + "../."); // get static 404
+                orangeSlash.setEscapeStrings(firstBlat + "..", lastBlat + "..", baseValue + "/../xyz"); // get app 404
 
-            Probe proxyEscape = new Probe("Proxy subfolder escape?", 4, "..;/", "..;foo/", "..;bar/");
-            proxyEscape.setEscapeStrings("../", ".;/", "..:/", "..:bar/", "..#/");
-            proxyEscape.setRandomAnchor(false);
-            proxyEscape.setPrefix(Probe.REPLACE);
-            results.addAll(injector.fuzz(hardBase, proxyEscape));
+                orangeSlash.setRandomAnchor(false);
+                orangeSlash.setPrefix(Probe.REPLACE);
+                ArrayList<Attack> orangeAttack = injector.fuzz(hardBase, orangeSlash);
+                if (!orangeAttack.isEmpty()) {
+                    results.addAll(orangeAttack);
+                    Probe guessFolder = new Probe("Confirmed Nginx alias escape type 1", 8, baseValue + "../asdfz", baseValue + "../statik");
+                    guessFolder.setEscapeStrings(baseValue + "../static", baseValue + "../static/.");
+                    guessFolder.setRandomAnchor(false);
+                    guessFolder.setPrefix(Probe.REPLACE);
+                    results.addAll(injector.fuzz(softBase, guessFolder));
+
+                    // fixme gets FPs on WordPress due to... prefix-matching?
+                    Probe guessFolder2 = new Probe("Confirmed Nginx alias escape type 2", 7, baseValue + "../asdfz", baseValue + "../statik");
+                    guessFolder2.setEscapeStrings(baseValue + "../" + baseValue, baseValue + "../" + baseValue + "/.");
+                    guessFolder2.setRandomAnchor(false);
+                    guessFolder2.setPrefix(Probe.REPLACE);
+                    results.addAll(injector.fuzz(softBase, guessFolder2));
+                }
+
+                Probe proxyEscape = new Probe("Proxy subfolder escape?", 4, "..;/", "..;foo/", "..;bar/");
+                proxyEscape.setEscapeStrings("../", ".;/", "..:/", "..:bar/", "..#/");
+                proxyEscape.setRandomAnchor(false);
+                proxyEscape.setPrefix(Probe.REPLACE);
+                results.addAll(injector.fuzz(hardBase, proxyEscape));
+            }
 
             if (Utilities.globalSettings.getBoolean("diff: magic value attacks")) {
 
