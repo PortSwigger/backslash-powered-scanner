@@ -16,14 +16,33 @@ import javax.swing.*;
 
 public class BurpExtender implements IBurpExtender {
     private static final String name = "Backslash Powered Scanner";
-    private static final String version = "1.03";
+    private static final String version = "1.04";
+    static DiffingScan diffscan = null;
 
     @Override
     public void registerExtenderCallbacks(final IBurpExtenderCallbacks callbacks) {
 
-        new Utilities(callbacks);
+        HashMap<String, Object> settings = new HashMap<>();
+        settings.put("thorough mode", false);
+        settings.put("confirmations", 8);
+        settings.put("encode everything", false);
+        settings.put("debug", false);
+        settings.put("try transformation scan", false);
+        settings.put("try diffing scan", true);
+        settings.put("diff: HPP", true);
+        settings.put("diff: HPP auto-followup", false);
+        settings.put("diff: syntax attacks", true);
+        settings.put("diff: value preserving attacks", true);
+        settings.put("diff: experimental concat attacks", false);
+        settings.put("diff: experimental folder attacks", false);
+        settings.put("diff: magic value attacks", true);
+        settings.put("diff: magic values", "undefined,null,empty,none,COM1,c!C123449477,aA1537368460!");
+        new Utilities(callbacks, settings, name);
         callbacks.setExtensionName(name);
 
+        diffscan = new DiffingScan("diff-scan");
+
+        new BulkScanLauncher(BulkScan.scans);
 
         try {
             StringUtils.isNumeric("1");
@@ -60,7 +79,7 @@ class FastScan implements IScannerCheck, IExtensionStateListener {
 
     FastScan(final IBurpExtenderCallbacks callbacks) {
         transformationScan = new TransformationScan(callbacks);
-        diffingScan = new DiffingScan();
+        diffingScan = BurpExtender.diffscan;
         this.callbacks = callbacks;
         helpers = callbacks.getHelpers();
     }
@@ -144,27 +163,6 @@ class FastScan implements IScannerCheck, IExtensionStateListener {
     }
 }
 
-
-class Fuzzable extends CustomScanIssue {
-    private final static String NAME = "Interesting input handling: ";
-    private final static String DETAIL = "The application reacts to inputs in a way that suggests it might be vulnerable to some kind of server-side code injection. The probes are listed below in chronological order, with evidence. Response attributes that only stay consistent in one probe-set are italicised, with the variable attribute starred.";
-    private final static String REMEDIATION = "This issue does not necessarily indicate a vulnerability; it is merely highlighting behaviour worthy of manual investigation. Try to determine the root cause of the observed behaviour." +
-            "Refer to <a href='http://blog.portswigger.net/2016/11/backslash-powered-scanning-hunting.html'>Backslash Powered Scanning</a> for further details and guidance interpreting results. ";
-
-    Fuzzable(IHttpRequestResponse[] requests, URL url, String title, String detail, boolean reliable, String severity) {
-        super(requests[0].getHttpService(), url, requests, NAME + title, DETAIL + detail, severity, calculateConfidence(reliable), REMEDIATION);
-    }
-
-    private static String calculateConfidence(boolean reliable) {
-        String confidence = "Tentative";
-        if (reliable) {
-            confidence = "Firm";
-        }
-        return confidence;
-    }
-
-}
-
 class InputTransformation extends CustomScanIssue {
     private final static String NAME = "Suspicious input transformation";
     private final static String DETAIL = "The application transforms input in a way that suggests it might be vulnerable to some kind of server-side code injection";
@@ -244,104 +242,6 @@ class ParamInsertionPoint implements IScannerInsertionPoint {
     }
 }
 
-
-class CustomScanIssue implements IScanIssue {
-    private IHttpService httpService;
-    private URL url;
-    private IHttpRequestResponse[] httpMessages;
-    private String name;
-    private String detail;
-    private String severity;
-    private String confidence;
-    private String remediation;
-
-    CustomScanIssue(
-            IHttpService httpService,
-            URL url,
-            IHttpRequestResponse[] httpMessages,
-            String name,
-            String detail,
-            String severity,
-            String confidence,
-            String remediation) {
-        this.name = name;
-        this.detail = detail;
-        this.severity = severity;
-        this.httpService = httpService;
-        this.url = url;
-        this.httpMessages = httpMessages;
-        this.confidence = confidence;
-        this.remediation = remediation;
-    }
-
-    @Override
-    public URL getUrl() {
-        return url;
-    }
-
-    @Override
-    public String getIssueName() {
-        return name;
-    }
-
-    @Override
-    public int getIssueType() {
-        return 0;
-    }
-
-    @Override
-    public String getSeverity() {
-        return severity;
-    }
-
-    @Override
-    public String getConfidence() {
-        return confidence;
-    }
-
-    @Override
-    public String getIssueBackground() {
-        return null;
-    }
-
-    @Override
-    public String getRemediationBackground() {
-        return null;
-    }
-
-    @Override
-    public String getIssueDetail() {
-        return detail;
-    }
-
-    @Override
-    public String getRemediationDetail() {
-        return remediation;
-    }
-
-    @Override
-    public IHttpRequestResponse[] getHttpMessages() {
-        return httpMessages;
-    }
-
-    @Override
-    public IHttpService getHttpService() {
-        return httpService;
-    }
-
-    public String getHost() {
-        return null;
-    }
-
-    public int getPort() {
-        return 0;
-    }
-
-    public String getProtocol() {
-        return null;
-    }
-}
-
 class OfferParamGuess implements IContextMenuFactory {
     private IBurpExtenderCallbacks callbacks;
 
@@ -410,7 +310,7 @@ class ParamGuesser implements Runnable, IExtensionStateListener {
                 ParamInsertionPoint insertionPoint = new ParamInsertionPoint(req.getRequest(), param.getName(), originalValue, param.getType());
                 ArrayList<Attack> paramGuesses = guessParams(req, insertionPoint);
                 if (!paramGuesses.isEmpty()) {
-                    Utilities.callbacks.addScanIssue(Utilities.reportReflectionIssue(paramGuesses.toArray((new Attack[paramGuesses.size()])), req));
+                    Utilities.callbacks.addScanIssue(Utilities.reportReflectionIssue(paramGuesses.toArray((new Attack[paramGuesses.size()])), req, "Backend Param", "A potential backend param was identified."));
                 }
                 break;
             }

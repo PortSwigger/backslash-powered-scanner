@@ -4,10 +4,15 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 
-class DiffingScan {
-    
+class DiffingScan extends ParamScan {
+
+    public DiffingScan(String name) {
+        super(name);
+    }
+
     private ArrayList<Attack> exploreAvailableFunctions(PayloadInjector injector, Attack basicAttack, String prefix, String suffix, boolean useRandomAnchor) {
         ArrayList<Attack> attacks = new ArrayList<>();
         ArrayList<String[]> functions = new ArrayList<>();
@@ -269,6 +274,9 @@ class DiffingScan {
             }
         }
 
+        boolean isInPath = Utilities.isInPath(insertionPoint);
+
+
         // does a request w/random input differ from the base request? (ie 'should I do soft attacks?')
         if (Utilities.globalSettings.getBoolean("diff: value preserving attacks") && !Utilities.verySimilar(softBase, hardBase)) {
 
@@ -387,9 +395,6 @@ class DiffingScan {
                 }
             }
 
-
-            boolean isInPath = Utilities.isInPath(insertionPoint);
-
             if (Utilities.globalSettings.getBoolean("thorough mode") && !isInPath && Utilities.mightBeIdentifier(baseValue) && !baseValue.equals("")) {
                 Probe dotSlash = new Probe("File Path Manipulation", 3, "../", "z/", "_/", "./../");
                 dotSlash.setEscapeStrings("./", "././", "./././");
@@ -438,49 +443,64 @@ class DiffingScan {
                 proxyEscape.setPrefix(Probe.REPLACE);
                 results.addAll(injector.fuzz(hardBase, proxyEscape));
             }
+        }
 
-            if (Utilities.globalSettings.getBoolean("diff: magic value attacks")) {
+        if (Utilities.globalSettings.getBoolean("diff: magic value attacks") && (!Utilities.verySimilar(softBase, hardBase) || Utilities.globalSettings.getBoolean("thorough mode"))) {
 
-                String[] magicValues = Utilities.globalSettings.getString("diff: magic values").split(",");
+            String[] magicValues = Utilities.globalSettings.getString("diff: magic values").split(",");
 
-                for (String magicValue: magicValues) {
-                    if (baseValue.equals(magicValue)) {
-                        continue;
-                    }
-
-                    if(magicValue.equals("COM1") && isInPath) {
-                        continue;
-                    }
-
-                    String[] corruptedMagic = new String[5];
-                    for (int i=0;i<4; i++) {
-                        StringBuilder corruptor = new StringBuilder(magicValue);
-                        corruptor.setCharAt(i % magicValue.length(), 'z');
-                        corruptedMagic[i] = corruptor.toString();
-                    }
-                    corruptedMagic[4] = "help"; // send a real word to filter out things like usernames and hostnames where 'null' is plausible
-                    Probe magic = new Probe("Magic value: "+magicValue, 3, magicValue);
-                    magic.setEscapeStrings(corruptedMagic);
-                    magic.setPrefix(Probe.REPLACE);
-                    magic.setUseCacheBuster(true);
-                    magic.setRequireConsistentEvidence(true);
-                    results.addAll(injector.fuzz(hardBase, magic));
+            Utilities.out("basevalue: "+baseValue);
+            for (String magicValue: magicValues) {
+                if (baseValue.equals(magicValue)) {
+                    continue;
                 }
 
-                if((!Utilities.globalSettings.getBoolean("thorough mode") && Utilities.mightBeIdentifier(baseValue)) || (Utilities.globalSettings.getBoolean("thorough mode") && Utilities.mightBeFunction(baseValue))) {
-                    Probe functionCall = new Probe("Function hijacking", 6, "sprimtf", "sprintg", "exception", "malloc");
-                    functionCall.setEscapeStrings("sprintf");
-                    functionCall.setPrefix(Probe.REPLACE);
-                    results.addAll(injector.fuzz(softBase, functionCall));
+                if(magicValue.equals("COM1") && isInPath) {
+                    continue;
                 }
+
+                String[] corruptedMagic = new String[5];
+                for (int i=0;i<4; i++) {
+                    StringBuilder corruptor = new StringBuilder(magicValue);
+                    corruptor.setCharAt(i % magicValue.length(), 'z');
+                    corruptedMagic[i] = corruptor.toString();
+                }
+                corruptedMagic[4] = "help"; // send a real word to filter out things like usernames and hostnames where 'null' is plausible
+                Probe magic = new Probe("Magic value: "+magicValue, 3, magicValue);
+                magic.setEscapeStrings(corruptedMagic);
+                magic.setPrefix(Probe.REPLACE);
+                magic.setUseCacheBuster(true);
+                magic.setRequireConsistentEvidence(true);
+                results.addAll(injector.fuzz(hardBase, magic));
+            }
+
+            if((!Utilities.globalSettings.getBoolean("thorough mode") && Utilities.mightBeIdentifier(baseValue)) || (Utilities.globalSettings.getBoolean("thorough mode") && Utilities.mightBeFunction(baseValue))) {
+                Probe functionCall = new Probe("Function hijacking", 6, "sprimtf", "sprintg", "exception", "malloc");
+                functionCall.setEscapeStrings("sprintf");
+                functionCall.setPrefix(Probe.REPLACE);
+                results.addAll(injector.fuzz(softBase, functionCall));
             }
         }
 
         if (!results.isEmpty()) {
-            return Utilities.reportReflectionIssue(results.toArray((new Attack[results.size()])), baseRequestResponse);
+            return Utilities.reportReflectionIssue(results.toArray((new Attack[results.size()])), baseRequestResponse, "Interesting input handling", "The application reacts to inputs in a way that suggests it might be vulnerable to some kind of server-side code injection. The probes are listed below in chronological order, with evidence. Response attributes that only stay consistent in one probe-set are italicised, with the variable attribute starred. ");
         }
         else {
             return null;
         }
+    }
+
+    @Override
+    List<IScanIssue> doScan(IHttpRequestResponse iHttpRequestResponse, IScannerInsertionPoint iScannerInsertionPoint) {
+        IScanIssue issue = findReflectionIssues(iHttpRequestResponse, iScannerInsertionPoint);
+        if (issue != null) {
+            Utilities.callbacks.addScanIssue(issue);
+        }
+        return null;
+    }
+
+    @Override
+    List<IScanIssue> doScan(byte[] bytes, IHttpService iHttpService) {
+        return null;
     }
 }
