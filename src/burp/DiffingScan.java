@@ -412,9 +412,8 @@ class DiffingScan extends ParamScan {
             }
 
             if (Utilities.globalSettings.getBoolean("diff: experimental folder attacks")) {
-                // fixme breaks on short input
-                String firstBlat = "z" + baseValue.substring(1, baseValue.length());
-                String lastBlat = baseValue.substring(0, baseValue.length() - 1) + "z";
+                String firstBlat = "z" + baseValue.substring(Math.min(baseValue.length(), 1));
+                String lastBlat = baseValue.substring(0, Math.max(baseValue.length() - 1, 0)) + "z";
                 Probe orangeSlash = new Probe("Possible Nginx alias escape", 4, baseValue + "..", baseValue + "../."); // get static 404
                 orangeSlash.setEscapeStrings(firstBlat + "..", lastBlat + "..", baseValue + "/../xyz"); // get app 404
 
