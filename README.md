@@ -6,6 +6,11 @@ For more information, please refer to the whitepaper at http://blog.portswigger.
 The code can be found at https://github.com/portswigger/backslash-powered-scanner Contributions and feature requests are welcome.
 
 # Changelog
+**1.10 20210407**
+ - Major refactor
+ - Support for bulk-scanning
+ - Misc bugfixes
+ 
 **1.03 20190814**
  - Detect path normalization exploits based on Orange Tsai's research
  
