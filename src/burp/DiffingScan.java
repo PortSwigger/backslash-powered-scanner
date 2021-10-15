@@ -354,7 +354,9 @@ class DiffingScan extends ParamScan {
                     results.addAll(exploreAvailableFunctions(injector, softBase, "/", "", false));
                 }
 
-                results.addAll(tryIncrementAttack(injector, softBase, baseValue));
+                if (Utilities.globalSettings.getBoolean("diff: iterable inputs")) {
+                    results.addAll(tryIncrementAttack(injector, softBase, baseValue));
+                }
             }
 
             if (Utilities.mightBeOrderBy(insertionPoint.getInsertionPointName(), baseValue)) {
@@ -484,7 +486,7 @@ class DiffingScan extends ParamScan {
         }
 
         if (!results.isEmpty()) {
-            return Utilities.reportReflectionIssue(results.toArray((new Attack[results.size()])), baseRequestResponse, "Interesting input handling", "The application reacts to inputs in a way that suggests it might be vulnerable to some kind of server-side code injection. The probes are listed below in chronological order, with evidence. Response attributes that only stay consistent in one probe-set are italicised, with the variable attribute starred. ");
+            return Utilities.reportReflectionIssue(results.toArray((new Attack[results.size()])), baseRequestResponse, "Interesting input handling", "The application reacts to inputs in a way that you may find interesting. The probes are listed below in chronological order, with evidence. Response attributes that only stay consistent in one probe-set are italicised, with the variable attribute starred. ");
         }
         else {
             return null;
@@ -509,6 +511,7 @@ class DiffingScan extends ParamScan {
         ArrayList<Attack> attacks = new ArrayList<>();
         int value;
         try {
+            // todo support non-base10
             value = Integer.parseInt(baseValue);
         } catch (NumberFormatException e) {
             return attacks;
@@ -540,7 +543,7 @@ class DiffingScan extends ParamScan {
             return attacks;
         }
 
-        Probe iterable1 = new Probe("Iterable 1: "+injector.getInsertionPoint().getInsertionPointName(), 3, ""+(value+1), "0"+(value+1), "00"+(value+1));
+        Probe iterable1 = new Probe("Iterable input: "+injector.getInsertionPoint().getInsertionPointName(), 1, ""+(value+1), "0"+(value+1), "00"+(value+1));
         iterable1.setEscapeStrings(baseValue, "0"+baseValue, "00"+baseValue, "000"+baseValue);
         iterable1.setRandomAnchor(false);
         iterable1.setPrefix(Probe.REPLACE);
@@ -549,7 +552,7 @@ class DiffingScan extends ParamScan {
             return attacks;
         }
 
-        Probe iterable2 = new Probe("Iterable 2: "+injector.getInsertionPoint().getInsertionPointName(), 3, ""+(value+2), "0"+(value+2), "00"+(value+2));
+        Probe iterable2 = new Probe("Iterable input: "+injector.getInsertionPoint().getInsertionPointName(), 1, ""+(value+2), "0"+(value+2), "00"+(value+2));
         iterable2.setEscapeStrings(""+(value+1), "0"+(value+1), "00"+(value+1), "000"+(value+1));
         iterable2.setRandomAnchor(false);
         iterable2.setPrefix(Probe.REPLACE);

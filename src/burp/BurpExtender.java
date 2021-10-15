@@ -33,6 +33,7 @@ public class BurpExtender implements IBurpExtender {
         settings.put("diff: HPP auto-followup", false);
         settings.put("diff: syntax attacks", true);
         settings.put("diff: value preserving attacks", true);
+        settings.put("diff: iterable inputs", true);
         settings.put("diff: experimental concat attacks", false);
         settings.put("diff: experimental folder attacks", false);
         settings.put("diff: magic value attacks", true);
