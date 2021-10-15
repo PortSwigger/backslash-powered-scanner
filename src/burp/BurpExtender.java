@@ -16,7 +16,7 @@ import javax.swing.*;
 
 public class BurpExtender implements IBurpExtender {
     private static final String name = "Backslash Powered Scanner";
-    private static final String version = "1.10";
+    private static final String version = "1.20";
     static DiffingScan diffscan = null;
 
     @Override
