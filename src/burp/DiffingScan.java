@@ -353,6 +353,34 @@ class DiffingScan extends ParamScan {
                     // if *that* worked, try injecting a function call
                     results.addAll(exploreAvailableFunctions(injector, softBase, "/", "", false));
                 }
+
+                try {
+                    int value = Integer.parseInt(baseValue);
+
+                    // this will break softBase - make a fresh copy instead
+                    // softBase.addAttack(injector.buildAttack("0"+baseValue, false));
+
+                    if (value <= 2) {
+                        value += 5;
+                    }
+                    int highValue = Integer.max(value+1000, value*1000);
+
+                    Probe iterable = new Probe("Iterable", 3, String.valueOf(value-1), String.valueOf(value+1), String.valueOf(value-2));
+                    iterable.setEscapeStrings(baseValue, "0"+baseValue, "00"+baseValue, "000"+baseValue);
+                    iterable.setRandomAnchor(false);
+                    iterable.setPrefix(Probe.REPLACE);
+                    results.addAll(injector.fuzz(softBase, iterable));
+
+                    Probe iterable2 = new Probe("Iterable (lame)", 4, String.valueOf(highValue-1), String.valueOf(highValue+1), String.valueOf(highValue-2));
+                    iterable2.setEscapeStrings(baseValue, "0"+highValue, "00"+highValue, "000"+highValue);
+                    iterable2.setRandomAnchor(false);
+                    iterable2.setPrefix(Probe.REPLACE);
+                    results.addAll(injector.fuzz(softBase, iterable2));
+
+                } catch (NumberFormatException e) {
+
+                }
+
             }
 
             if (Utilities.mightBeOrderBy(insertionPoint.getInsertionPointName(), baseValue)) {
