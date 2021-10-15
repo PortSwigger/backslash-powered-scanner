@@ -354,33 +354,7 @@ class DiffingScan extends ParamScan {
                     results.addAll(exploreAvailableFunctions(injector, softBase, "/", "", false));
                 }
 
-                try {
-                    int value = Integer.parseInt(baseValue);
-
-                    // this will break softBase - make a fresh copy instead
-                    // softBase.addAttack(injector.buildAttack("0"+baseValue, false));
-
-                    if (value <= 2) {
-                        value += 5;
-                    }
-                    int highValue = Integer.max(value+1000, value*1000);
-
-                    Probe iterable = new Probe("Iterable", 3, String.valueOf(value-1), String.valueOf(value+1), String.valueOf(value-2));
-                    iterable.setEscapeStrings(baseValue, "0"+baseValue, "00"+baseValue, "000"+baseValue);
-                    iterable.setRandomAnchor(false);
-                    iterable.setPrefix(Probe.REPLACE);
-                    results.addAll(injector.fuzz(softBase, iterable));
-
-                    Probe iterable2 = new Probe("Iterable (lame)", 4, String.valueOf(highValue-1), String.valueOf(highValue+1), String.valueOf(highValue-2));
-                    iterable2.setEscapeStrings(baseValue, "0"+highValue, "00"+highValue, "000"+highValue);
-                    iterable2.setRandomAnchor(false);
-                    iterable2.setPrefix(Probe.REPLACE);
-                    results.addAll(injector.fuzz(softBase, iterable2));
-
-                } catch (NumberFormatException e) {
-
-                }
-
+                results.addAll(tryIncrementAttack(injector, softBase, baseValue));
             }
 
             if (Utilities.mightBeOrderBy(insertionPoint.getInsertionPointName(), baseValue)) {
@@ -529,5 +503,64 @@ class DiffingScan extends ParamScan {
     @Override
     List<IScanIssue> doScan(byte[] bytes, IHttpService iHttpService) {
         return null;
+    }
+
+    private ArrayList<Attack> tryIncrementAttack(PayloadInjector injector, Attack softBase, String baseValue) {
+        ArrayList<Attack> attacks = new ArrayList<>();
+        int value;
+        try {
+            value = Integer.parseInt(baseValue);
+        } catch (NumberFormatException e) {
+            return attacks;
+        }
+
+        Attack X = new Attack();
+        X.addAttack(softBase);
+        X.addAttack(injector.buildAttack("0"+baseValue, false));
+
+        Attack incrementedX = new Attack();
+        incrementedX.addAttack(injector.buildAttack(""+(value+1), false));
+        incrementedX.addAttack(injector.buildAttack("0"+(value+1), false));
+        if (Utilities.verySimilar(X, incrementedX)) {
+            return attacks;
+        }
+
+        int highValue = Integer.max(value+1000, value*1000);
+        Attack highX = new Attack();
+        highX.addAttack(injector.buildAttack(""+highValue, false));
+        highX.addAttack(injector.buildAttack("0"+highValue, false));
+        if (Utilities.verySimilar(highX, incrementedX)) {
+            return attacks;
+        }
+
+        Attack incrementedHighX = new Attack();
+        incrementedHighX.addAttack(injector.buildAttack(""+(highValue+1), false));
+        incrementedHighX.addAttack(injector.buildAttack("0"+(highValue+1), false));
+        if (!Utilities.similar(incrementedHighX, highX)) {
+            return attacks;
+        }
+
+        Probe iterable1 = new Probe("Iterable 1: "+injector.getInsertionPoint().getInsertionPointName(), 3, ""+(value+1), "0"+(value+1), "00"+(value+1));
+        iterable1.setEscapeStrings(baseValue, "0"+baseValue, "00"+baseValue, "000"+baseValue);
+        iterable1.setRandomAnchor(false);
+        iterable1.setPrefix(Probe.REPLACE);
+        ArrayList<Attack> plusOne = injector.fuzz(X, iterable1);
+        if (plusOne.isEmpty()) {
+            return attacks;
+        }
+
+        Probe iterable2 = new Probe("Iterable 2: "+injector.getInsertionPoint().getInsertionPointName(), 3, ""+(value+2), "0"+(value+2), "00"+(value+2));
+        iterable2.setEscapeStrings(""+(value+1), "0"+(value+1), "00"+(value+1), "000"+(value+1));
+        iterable2.setRandomAnchor(false);
+        iterable2.setPrefix(Probe.REPLACE);
+        ArrayList<Attack> plusTwo = injector.fuzz(incrementedX, iterable2);
+        if (plusTwo.isEmpty()) {
+            return attacks;
+        }
+
+        attacks.addAll(plusOne);
+        attacks.addAll(plusTwo);
+
+        return attacks;
     }
 }

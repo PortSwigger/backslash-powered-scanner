@@ -30,7 +30,7 @@ class Attack {
     private final String[] keys = {"</html>", "error", "exception", "invalid", "warning", "stack", "sql syntax", "divisor", "divide", "ora-", "division", "infinity", "<script", "<div"};
     String payload;
     private Probe probe;
-    private String anchor;
+    private String anchor = "";
     private HashMap<String, Object> fingerprint;
 
 
