@@ -6,6 +6,10 @@ For more information, please refer to the whitepaper at http://blog.portswigger.
 The code can be found at https://github.com/portswigger/backslash-powered-scanner Contributions and feature requests are welcome.
 
 # Changelog
+**1.21 20211015**
+ - Support for detecting iterable inputs
+ - Support for Burp Suite Enterprise Edition
+
 **1.10 20210407**
  - Major refactor
  - Support for bulk-scanning
