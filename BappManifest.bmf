@@ -3,10 +3,11 @@ ExtensionType: 1
 Name: Backslash Powered Scanner
 RepoName: backslash-powered-scanner
 ScreenVersion: 1.20
-SerialVersion: 14
+SerialVersion: 18
 MinPlatformVersion: 0
 ProOnly: True
 Author: James 'albinowax' Kettle, PortSwigger Web Security
 ShortDescription: Finds unknown classes of injection vulnerabilities.
 EntryPoint: build/libs/backslash-powered-scanner-all.jar
 BuildCommand: gradle fatJar
+SupportedProducts: Pro 
