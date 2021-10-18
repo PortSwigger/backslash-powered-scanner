@@ -27,6 +27,7 @@ public class BurpExtender implements IBurpExtender {
         settings.put("confirmations", 8);
         settings.put("encode everything", false);
         settings.put("debug", false);
+        settings.put("include name in title", false);
         settings.put("try transformation scan", false);
         settings.put("try diffing scan", true);
         settings.put("diff: HPP", true);
@@ -36,7 +37,7 @@ public class BurpExtender implements IBurpExtender {
         settings.put("diff: iterable inputs", true);
         settings.put("diff: experimental concat attacks", false);
         settings.put("diff: experimental folder attacks", false);
-        settings.put("diff: magic value attacks", true);
+        settings.put("diff: magic value attacks", false);
         settings.put("diff: magic values", "undefined,null,empty,none,COM1,c!C123449477,aA1537368460!");
         new Utilities(callbacks, settings, name);
         callbacks.setExtensionName(name);

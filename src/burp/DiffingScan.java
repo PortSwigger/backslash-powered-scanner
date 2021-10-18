@@ -543,7 +543,12 @@ class DiffingScan extends ParamScan {
             return attacks;
         }
 
-        Probe iterable1 = new Probe("Iterable input: "+injector.getInsertionPoint().getInsertionPointName(), 1, ""+(value+1), "0"+(value+1), "00"+(value+1));
+        String title = "Iterable input";
+        if (Utilities.globalSettings.getBoolean("include name in title")) {
+            title += " "+injector.getInsertionPoint().getInsertionPointName();
+        }
+
+        Probe iterable1 = new Probe(title, 1, ""+(value+1), "0"+(value+1), "00"+(value+1));
         iterable1.setEscapeStrings(baseValue, "0"+baseValue, "00"+baseValue, "000"+baseValue);
         iterable1.setRandomAnchor(false);
         iterable1.setPrefix(Probe.REPLACE);
@@ -552,7 +557,7 @@ class DiffingScan extends ParamScan {
             return attacks;
         }
 
-        Probe iterable2 = new Probe("Iterable input: "+injector.getInsertionPoint().getInsertionPointName(), 1, ""+(value+2), "0"+(value+2), "00"+(value+2));
+        Probe iterable2 = new Probe(title, 1, ""+(value+2), "0"+(value+2), "00"+(value+2));
         iterable2.setEscapeStrings(""+(value+1), "0"+(value+1), "00"+(value+1), "000"+(value+1));
         iterable2.setRandomAnchor(false);
         iterable2.setPrefix(Probe.REPLACE);
