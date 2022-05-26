@@ -19,29 +19,31 @@ public class BurpExtender implements IBurpExtender {
     private static final String version = "1.21";
     static DiffingScan diffscan = null;
 
+    static SettingsBox settings = new SettingsBox();
+
     @Override
     public void registerExtenderCallbacks(final IBurpExtenderCallbacks callbacks) {
-
-        HashMap<String, Object> settings = new HashMap<>();
-        settings.put("thorough mode", false);
-        settings.put("confirmations", 8);
-        settings.put("encode everything", false);
-        settings.put("debug", false);
-        settings.put("include name in title", false);
-        settings.put("try transformation scan", false);
-        settings.put("try diffing scan", true);
-        settings.put("diff: HPP", true);
-        settings.put("diff: HPP auto-followup", false);
-        settings.put("diff: syntax attacks", true);
-        settings.put("diff: value preserving attacks", true);
-        settings.put("diff: iterable inputs", true);
-        settings.put("diff: experimental concat attacks", false);
-        settings.put("diff: experimental folder attacks", false);
-        settings.put("diff: magic value attacks", false);
-        settings.put("diff: magic values", "undefined,null,empty,none,COM1,c!C123449477,aA1537368460!");
-        new Utilities(callbacks, settings, name);
+        new Utilities(callbacks, new HashMap<>(), name);
         callbacks.setExtensionName(name);
 
+        settings.register("thorough mode", false, "Prioritise scan thoroughness over speed");
+        settings.register("skip unresponsive params", true, "Skip scanning parameters where sending a fuzz-string doesn't change the response");
+        settings.register("confirmations", 8, "Repeat each attack set this many times before reporting an issue. Increase this number to reduce FPs.");
+        settings.register("encode everything", false, "Perform heavier URL encoding on payloads");
+        settings.register("debug", false);
+        settings.register("include name in title", false);
+        settings.register("try transformation scan", false, "Look for suspicious input transformations");
+        settings.register("try diffing scan", true);
+        settings.register("diff: HPP", true, "Scan for HTTP Parameter Pollution");
+        settings.register("diff: HPP auto-followup", false, "If HPP is detected, automatically attempt to identify back-end parameters");
+        settings.register("diff: syntax attacks", true);
+        settings.register("diff: value preserving attacks", true);
+        settings.register("diff: iterable inputs", true, "Scan for numbers where incrementing has an interesting effect.");
+        settings.register("diff: experimental concat attacks", false);
+        settings.register("diff: experimental folder attacks", false, "Scan for Orange-style folder escapes. Somewhat unreliable.");
+        settings.register("diff: magic value attacks", false, "Look for when configured keywords trigger different code-paths");
+        settings.register("diff: magic values", "undefined,null,empty,none,COM1,c!C123449477,aA1537368460!", "Keywords that may trigger interesting code-paths. Try adding your own!");
+        
         diffscan = new DiffingScan("diff-scan");
 
         new BulkScanLauncher(BulkScan.scans);

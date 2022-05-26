@@ -11,6 +11,7 @@ class DiffingScan extends ParamScan {
 
     public DiffingScan(String name) {
         super(name);
+        scanSettings.importSettings(BurpExtender.settings);
     }
 
     private ArrayList<Attack> exploreAvailableFunctions(PayloadInjector injector, Attack basicAttack, String prefix, String suffix, boolean useRandomAnchor) {
@@ -86,17 +87,17 @@ class DiffingScan extends ParamScan {
 
         // work out which payloads (if any) are worth trying
         Attack crudeFuzz = injector.buildAttack("`z'z\"${{%{{\\", true);
-        if (Utilities.verySimilar(softBase, crudeFuzz)) {
+        if (Utilities.globalSettings.getBoolean("skip unresponsive params") && Utilities.verySimilar(softBase, crudeFuzz)) {
             return null;
         }
 
         softBase.addAttack(injector.buildAttack(baseValue, false));
-        if (Utilities.verySimilar(softBase, crudeFuzz)) {
+        if (Utilities.globalSettings.getBoolean("skip unresponsive params") && Utilities.verySimilar(softBase, crudeFuzz)) {
             return null;
         }
 
         crudeFuzz.addAttack(injector.buildAttack("\\z`z'z\"${{%{{\\", true));
-        if (Utilities.verySimilar(softBase, crudeFuzz)) {
+        if (Utilities.globalSettings.getBoolean("skip unresponsive params") && Utilities.verySimilar(softBase, crudeFuzz)) {
             return null;
         }
 
