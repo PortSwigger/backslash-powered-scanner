@@ -68,7 +68,12 @@ class DiffingScan extends ParamScan {
         
         PayloadInjector injector = new PayloadInjector(baseRequestResponse, insertionPoint);
         String baseValue = insertionPoint.getBaseValue();
-        Attack softBase = new Attack(baseRequestResponse);
+        Attack softBase;
+        if (Utilities.globalSettings.getBoolean("ignore baseresponse")) {
+            softBase = new Attack();
+        } else {
+            softBase = new Attack(new Resp(baseRequestResponse));
+        }
 
         ArrayList<Attack> results = new ArrayList<>();
 
