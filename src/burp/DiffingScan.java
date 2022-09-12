@@ -79,8 +79,8 @@ class DiffingScan extends ParamScan {
         ArrayList<Attack> results = new ArrayList<>();
 
         if (Utilities.globalSettings.getBoolean("diff: HPP")) {
-            Probe backendParameterInjection = new Probe("Backend Parameter Injection", 2, "$zq=%3c%61%60%27%22%24%7b%7b%5c&zq%3d", "|zq=x%3c%61%60%27%22%24%7b%7b%5c", "!zq=%3c%61%60%27%22%24%7b%7b%5c");
-            backendParameterInjection.setEscapeStrings("%26zq=%3c%61%60%27%22%24%7b%7b%5c", "%26zq=x%3c%61%60%27%22%24%7b%7b%5c"); // "#zq=%3c%61%60%27%22%24%7b%7b%5c"
+            Probe backendParameterInjection = new Probe("Backend Parameter Injection", 2, "$zq=%3c%61%60%27%22%24%7b%7b%5c&zq%3d", "|zqy=x%3c%61%60%27%22%24%7b%7b%5c", "!zq=%3c%61%60%27%22%24%7b%7b%5c");
+            backendParameterInjection.setEscapeStrings("%26zqy=%3c%61%60%27%22%24%7b%7b%5c", "%26zq=x%3c%61%60%27%22%24%7b%7b%5c"); // "#zq=%3c%61%60%27%22%24%7b%7b%5c"
             backendParameterInjection.setRandomAnchor(false);
             backendParameterInjection.setTip("To scan for backend parameters, right click on the attached request and select 'Identify Backend Parameters'. This option may not be available for non-standard parameters. Scan progress is visible in this extension's output tab, and new scanner issues will be created for any parameters identified.");
             ArrayList<Attack> backendParameterAttack = injector.fuzz(softBase, backendParameterInjection);

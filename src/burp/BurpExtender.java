@@ -29,7 +29,6 @@ public class BurpExtender implements IBurpExtender {
         settings.register("thorough mode", false, "Prioritise scan thoroughness over speed");
         settings.register("skip unresponsive params", true, "Skip scanning parameters where sending a fuzz-string doesn't change the response");
         settings.register("ignore baseresponse", false, "Don't treat the selected request as a sample. Useful if it's old. ");
-        settings.register("confirmations", 8, "Repeat each attack set this many times before reporting an issue. Increase this number to reduce FPs.");
         settings.register("encode everything", false, "Perform heavier URL encoding on payloads");
         settings.register("debug", false);
         settings.register("include name in title", false);
