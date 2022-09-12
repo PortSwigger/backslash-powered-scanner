@@ -38,6 +38,7 @@ public class BurpExtender implements IBurpExtender {
         settings.register("diff: HPP", true, "Scan for HTTP Parameter Pollution");
         settings.register("diff: HPP auto-followup", false, "If HPP is detected, automatically attempt to identify back-end parameters");
         settings.register("diff: syntax attacks", true);
+        settings.register("syntax: interpolation", true);
         settings.register("diff: value preserving attacks", true);
         settings.register("diff: iterable inputs", true, "Scan for numbers where incrementing has an interesting effect.");
         settings.register("diff: experimental concat attacks", false);

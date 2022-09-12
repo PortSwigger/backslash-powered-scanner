@@ -246,36 +246,37 @@ class DiffingScan extends ParamScan {
 
             }
 
-            Probe interp = new Probe("Interpolation fuzz", 2, "%{{z${{z", "z%{{zz${{z");
-            interp.setEscapeStrings("%}}$}}", "}}%z}}$z", "z%}}zz$}}z");
-            ArrayList<Attack> interpResults = injector.fuzz(hardBase, interp);
-            if (!interpResults.isEmpty()) {
-                results.addAll(interpResults);
+            if (Utilities.globalSettings.getBoolean("syntax: interpolation")) {
+                Probe interp = new Probe("Interpolation fuzz", 2, "%{{z${{z", "z%{{zz${{z");
+                interp.setEscapeStrings("%}}$}}", "}}%z}}$z", "z%}}zz$}}z");
+                ArrayList<Attack> interpResults = injector.fuzz(hardBase, interp);
+                if (!interpResults.isEmpty()) {
+                    results.addAll(interpResults);
 
-                Probe curlyParse = new Probe("Interpolation - curly", 5, "{{z", "z{{z");
-                curlyParse.setEscapeStrings("z}}z", "}}z", "z}}");
-                ArrayList<Attack> curlyParseAttack = injector.fuzz(hardBase, curlyParse);
+                    Probe curlyParse = new Probe("Interpolation - curly", 5, "{{z", "z{{z");
+                    curlyParse.setEscapeStrings("z}}z", "}}z", "z}}");
+                    ArrayList<Attack> curlyParseAttack = injector.fuzz(hardBase, curlyParse);
 
-                if (!curlyParseAttack.isEmpty()) {
-                    results.addAll(curlyParseAttack);
-                    results.addAll(exploreAvailableFunctions(injector, hardBase, "{{", "}}", true));
-                }
-                else {
-                    Probe dollarParse = new Probe("Interpolation - dollar", 5, "${{z", "z${{z");
-                    dollarParse.setEscapeStrings("$}}", "}}$z", "z$}}z");
-                    ArrayList<Attack> dollarParseAttack = injector.fuzz(hardBase, dollarParse);
-                    results.addAll(dollarParseAttack);
+                    if (!curlyParseAttack.isEmpty()) {
+                        results.addAll(curlyParseAttack);
+                        results.addAll(exploreAvailableFunctions(injector, hardBase, "{{", "}}", true));
+                    } else {
+                        Probe dollarParse = new Probe("Interpolation - dollar", 5, "${{z", "z${{z");
+                        dollarParse.setEscapeStrings("$}}", "}}$z", "z$}}z");
+                        ArrayList<Attack> dollarParseAttack = injector.fuzz(hardBase, dollarParse);
+                        results.addAll(dollarParseAttack);
 
-                    Probe percentParse = new Probe("Interpolation - percent", 5, "%{{41", "41%{{41");
-                    percentParse.setEscapeStrings("%}}", "}}%41", "41%}}41");
-                    ArrayList<Attack> percentParseAttack = injector.fuzz(hardBase, percentParse);
-                    results.addAll(percentParseAttack);
+                        Probe percentParse = new Probe("Interpolation - percent", 5, "%{{41", "41%{{41");
+                        percentParse.setEscapeStrings("%}}", "}}%41", "41%}}41");
+                        ArrayList<Attack> percentParseAttack = injector.fuzz(hardBase, percentParse);
+                        results.addAll(percentParseAttack);
 
-                    if (!dollarParseAttack.isEmpty()) {
-                        results.addAll(exploreAvailableFunctions(injector, hardBase, "${", "}", true));
-                        results.addAll(exploreAvailableFunctions(injector, hardBase, "", "", true));
-                    } else if (!percentParseAttack.isEmpty()) {
-                        results.addAll(exploreAvailableFunctions(injector, hardBase, "%{", "}", true));
+                        if (!dollarParseAttack.isEmpty()) {
+                            results.addAll(exploreAvailableFunctions(injector, hardBase, "${", "}", true));
+                            results.addAll(exploreAvailableFunctions(injector, hardBase, "", "", true));
+                        } else if (!percentParseAttack.isEmpty()) {
+                            results.addAll(exploreAvailableFunctions(injector, hardBase, "%{", "}", true));
+                        }
                     }
                 }
             }
