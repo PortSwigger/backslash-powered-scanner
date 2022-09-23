@@ -3,7 +3,7 @@ ExtensionType: 1
 Name: Backslash Powered Scanner
 RepoName: backslash-powered-scanner
 ScreenVersion: 1.21
-SerialVersion: 20
+SerialVersion: 21
 MinPlatformVersion: 0
 ProOnly: True
 Author: James 'albinowax' Kettle, PortSwigger Web Security
