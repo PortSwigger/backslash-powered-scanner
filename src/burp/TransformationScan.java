@@ -49,7 +49,7 @@ public class TransformationScan {
         IHttpRequestResponse attack = callbacks.makeHttpRequest(
                 baseRequestResponse.getHttpService(), insertionPoint.buildRequest(payload.getBytes())); // Utilities.buildRequest(baseRequestResponse, insertionPoint, payload)
 
-        return getTransformationResults(leftAnchor + "\\" + middleAnchor, rightAnchor, helpers.stringToBytes(helpers.bytesToString(Utilities.filterResponse(attack.getResponse()))));
+        return getTransformationResults(leftAnchor + "\\" + middleAnchor, rightAnchor, helpers.stringToBytes(helpers.bytesToString(BulkUtilities.filterResponse(attack.getResponse()))));
     }
 
     private Probe.ProbeResults classifyHandling(IHttpRequestResponse baseRequestResponse, IScannerInsertionPoint insertionPoint, String probe, boolean expectBackSlashConsumption) {
@@ -99,8 +99,8 @@ public class TransformationScan {
 
         String leftAnchor = Utilities.randomString(5);
         String rightAnchor = "z" + Utilities.randomString(2);
-        Attack basicAttack = Utilities.buildTransformationAttack(baseRequestResponse, insertionPoint, leftAnchor, "\\\\", rightAnchor);
-        if (Utilities.getMatches(Utilities.filterResponse(basicAttack.getFirstRequest().getResponse()), (leftAnchor + "\\" + rightAnchor).getBytes(), -1).isEmpty()) {
+        Attack basicAttack = BulkUtilities.buildTransformationAttack(baseRequestResponse, insertionPoint, leftAnchor, "\\\\", rightAnchor);
+        if (Utilities.getMatches(BulkUtilities.filterResponse(basicAttack.getFirstRequest().getResponse()), (leftAnchor + "\\" + rightAnchor).getBytes(), -1).isEmpty()) {
             return null;
         }
 

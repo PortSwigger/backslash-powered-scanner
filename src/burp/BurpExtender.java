@@ -46,6 +46,7 @@ public class BurpExtender implements IBurpExtender {
         settings.register("diff: magic values", "undefined,null,empty,none,COM1,c!C123449477,aA1537368460!", "Keywords that may trigger interesting code-paths. Try adding your own!");
         
         diffscan = new DiffingScan("diff-scan");
+        Scan ipscan = new MagicIPScan("ip-scan");
 
         new BulkScanLauncher(BulkScan.scans);
 
@@ -272,7 +273,7 @@ class ParamGuesser implements Runnable, IExtensionStateListener {
                 ParamInsertionPoint insertionPoint = new ParamInsertionPoint(req.getRequest(), param.getName(), originalValue, param.getType());
                 ArrayList<Attack> paramGuesses = guessParams(req, insertionPoint);
                 if (!paramGuesses.isEmpty()) {
-                    Utilities.callbacks.addScanIssue(Utilities.reportReflectionIssue(paramGuesses.toArray((new Attack[paramGuesses.size()])), req, "Backend Param", "A potential backend param was identified."));
+                    Utilities.callbacks.addScanIssue(BulkUtilities.reportReflectionIssue(paramGuesses.toArray((new Attack[paramGuesses.size()])), req, "Backend Param", "A potential backend param was identified."));
                 }
                 break;
             }
@@ -303,10 +304,10 @@ class ParamGuesser implements Runnable, IExtensionStateListener {
             for (int i = 0; i < Utilities.paramNames.size(); i++) { // i<Utilities.paramNames.size();
                 String candidate = Utilities.paramNames.get(i);
                 Attack paramGuess = injector.buildAttack(baseValue + "&" + candidate + "=%3c%61%60%27%22%24%7b%7b%5c", false);
-                if (!Utilities.similar(base, paramGuess)) {
+                if (!BulkUtilities.similar(base, paramGuess)) {
                     Attack confirmParamGuess = injector.buildAttack(baseValue + "&" + candidate + "=%3c%61%60%27%22%24%7b%7b%5c", false);
                     base.addAttack(injector.buildAttack(baseValue + "&" + candidate + "z=%3c%61%60%27%22%24%7b%7b%5c", false));
-                    if (!Utilities.similar(base, confirmParamGuess)) {
+                    if (!BulkUtilities.similar(base, confirmParamGuess)) {
                         Probe validParam = new Probe("Backend param: " + candidate, 4, "&" + candidate + "=%3c%61%60%27%22%24%7b%7b%5c", "&" + candidate + "=%3c%62%60%27%22%24%7b%7b%5c");
                         validParam.setEscapeStrings("&" + Utilities.randomString(candidate.length()) + "=%3c%61%60%27%22%24%7b%7b%5c", "&" + candidate + "z=%3c%61%60%27%22%24%7b%7b%5c");
                         validParam.setRandomAnchor(false);

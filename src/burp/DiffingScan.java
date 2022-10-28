@@ -93,26 +93,26 @@ class DiffingScan extends ParamScan {
 
         // work out which payloads (if any) are worth trying
         Attack crudeFuzz = injector.buildAttack("`z'z\"${{%{{\\", true);
-        if (Utilities.globalSettings.getBoolean("skip unresponsive params") && Utilities.verySimilar(softBase, crudeFuzz)) {
+        if (Utilities.globalSettings.getBoolean("skip unresponsive params") && BulkUtilities.verySimilar(softBase, crudeFuzz)) {
             return null;
         }
 
         softBase.addAttack(injector.buildAttack(baseValue, false));
-        if (Utilities.globalSettings.getBoolean("skip unresponsive params") && Utilities.verySimilar(softBase, crudeFuzz)) {
+        if (Utilities.globalSettings.getBoolean("skip unresponsive params") && BulkUtilities.verySimilar(softBase, crudeFuzz)) {
             return null;
         }
 
         crudeFuzz.addAttack(injector.buildAttack("\\z`z'z\"${{%{{\\", true));
-        if (Utilities.globalSettings.getBoolean("skip unresponsive params") && Utilities.verySimilar(softBase, crudeFuzz)) {
+        if (Utilities.globalSettings.getBoolean("skip unresponsive params") && BulkUtilities.verySimilar(softBase, crudeFuzz)) {
             return null;
         }
 
         Attack hardBase = injector.buildAttack("", true);
-        if (!Utilities.verySimilar(hardBase, crudeFuzz)) {
+        if (!BulkUtilities.verySimilar(hardBase, crudeFuzz)) {
             hardBase.addAttack(injector.buildAttack("", true));
         }
 
-        if (Utilities.globalSettings.getBoolean("diff: syntax attacks") && !Utilities.verySimilar(hardBase, crudeFuzz)) {
+        if (Utilities.globalSettings.getBoolean("diff: syntax attacks") && !BulkUtilities.verySimilar(hardBase, crudeFuzz)) {
             
             boolean worthTryingInjections = false;
             if (!Utilities.globalSettings.getBoolean("thorough mode")) {
@@ -286,7 +286,7 @@ class DiffingScan extends ParamScan {
 
 
         // does a request w/random input differ from the base request? (ie 'should I do soft attacks?')
-        if (Utilities.globalSettings.getBoolean("diff: value preserving attacks") && !Utilities.verySimilar(softBase, hardBase)) {
+        if (Utilities.globalSettings.getBoolean("diff: value preserving attacks") && !BulkUtilities.verySimilar(softBase, hardBase)) {
 
             if (Utilities.globalSettings.getBoolean("diff: experimental concat attacks") && Utilities.globalSettings.getBoolean("thorough mode")) {
                 String[] potential_delimiters = {"'", "\""};
@@ -456,7 +456,7 @@ class DiffingScan extends ParamScan {
             }
         }
 
-        if (Utilities.globalSettings.getBoolean("diff: magic value attacks") && (!Utilities.verySimilar(softBase, hardBase) || Utilities.globalSettings.getBoolean("thorough mode"))) {
+        if (Utilities.globalSettings.getBoolean("diff: magic value attacks") && (!BulkUtilities.verySimilar(softBase, hardBase) || Utilities.globalSettings.getBoolean("thorough mode"))) {
 
             String[] magicValues = Utilities.globalSettings.getString("diff: magic values").split(",");
 
@@ -494,7 +494,7 @@ class DiffingScan extends ParamScan {
         }
 
         if (!results.isEmpty()) {
-            return Utilities.reportReflectionIssue(results.toArray((new Attack[results.size()])), baseRequestResponse, "Interesting input handling", "The application reacts to inputs in a way that you may find interesting. The probes are listed below in chronological order, with evidence. Response attributes that only stay consistent in one probe-set are italicised, with the variable attribute starred. ");
+            return BulkUtilities.reportReflectionIssue(results.toArray((new Attack[results.size()])), baseRequestResponse, "Interesting input handling", "The application reacts to inputs in a way that you may find interesting. The probes are listed below in chronological order, with evidence. Response attributes that only stay consistent in one probe-set are italicised, with the variable attribute starred. ");
         }
         else {
             return null;
@@ -532,7 +532,7 @@ class DiffingScan extends ParamScan {
         Attack incrementedX = new Attack();
         incrementedX.addAttack(injector.buildAttack(""+(value+1), false));
         incrementedX.addAttack(injector.buildAttack("0"+(value+1), false));
-        if (Utilities.verySimilar(X, incrementedX)) {
+        if (BulkUtilities.verySimilar(X, incrementedX)) {
             return attacks;
         }
 
@@ -540,14 +540,14 @@ class DiffingScan extends ParamScan {
         Attack highX = new Attack();
         highX.addAttack(injector.buildAttack(""+highValue, false));
         highX.addAttack(injector.buildAttack("0"+highValue, false));
-        if (Utilities.verySimilar(highX, incrementedX)) {
+        if (BulkUtilities.verySimilar(highX, incrementedX)) {
             return attacks;
         }
 
         Attack incrementedHighX = new Attack();
         incrementedHighX.addAttack(injector.buildAttack(""+(highValue+1), false));
         incrementedHighX.addAttack(injector.buildAttack("0"+(highValue+1), false));
-        if (!Utilities.similar(incrementedHighX, highX)) {
+        if (!BulkUtilities.similar(incrementedHighX, highX)) {
             return attacks;
         }
 
