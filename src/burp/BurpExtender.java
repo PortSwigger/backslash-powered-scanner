@@ -16,7 +16,7 @@ import javax.swing.*;
 
 public class BurpExtender implements IBurpExtender {
     private static final String name = "Backslash Powered Scanner";
-    private static final String version = "1.21";
+    private static final String version = "1.22";
     static DiffingScan diffscan = null;
 
     static SettingsBox settings = new SettingsBox();
@@ -37,7 +37,7 @@ public class BurpExtender implements IBurpExtender {
         settings.register("diff: HPP", true, "Scan for HTTP Parameter Pollution");
         settings.register("diff: HPP auto-followup", false, "If HPP is detected, automatically attempt to identify back-end parameters");
         settings.register("diff: syntax attacks", true);
-        settings.register("syntax: interpolation", true);
+        settings.register("syntax: interpolation", false);
         settings.register("diff: value preserving attacks", true);
         settings.register("diff: iterable inputs", true, "Scan for numbers where incrementing has an interesting effect.");
         settings.register("diff: experimental concat attacks", false);
@@ -46,7 +46,7 @@ public class BurpExtender implements IBurpExtender {
         settings.register("diff: magic values", "undefined,null,empty,none,COM1,c!C123449477,aA1537368460!", "Keywords that may trigger interesting code-paths. Try adding your own!");
         
         diffscan = new DiffingScan("diff-scan");
-        Scan ipscan = new MagicIPScan("ip-scan");
+        // Scan ipscan = new MagicIPScan("ip-scan");
 
         new BulkScanLauncher(BulkScan.scans);
 

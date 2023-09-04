@@ -8,9 +8,8 @@ targetCompatibility = '1.8'
 sourceCompatibility = '1.8'
 
 dependencies {
-    implementation 'net.portswigger.burp.extender:burp-extender-api:1.7.13'
     implementation 'org.apache.commons:commons-lang3:3.5'
-    implementation files('bulkScan-all.jar')
+    implementation files('bulkScan-all.jar') // contains albinowaxUtils and Extender API
 }
 
 sourceSets {
