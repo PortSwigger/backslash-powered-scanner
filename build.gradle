@@ -9,7 +9,7 @@ sourceCompatibility = '1.8'
 
 dependencies {
     implementation 'org.apache.commons:commons-lang3:3.5'
-    implementation files('bulkScan-all.jar') // contains turbo intruder, albinowaxUtils and Extender API. Build via https://github.com/albinowax/bulkScan
+    implementation files('bulkScan-all.jar') // contains albinowaxUtils and Extender API. Build via https://github.com/albinowax/bulkScan
 }
 
 sourceSets {

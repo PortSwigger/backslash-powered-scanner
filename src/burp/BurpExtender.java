@@ -25,7 +25,7 @@ public class BurpExtender implements IBurpExtender, BurpExtension {
     static SettingsBox settings = new SettingsBox();
 
     public void initialize(MontoyaApi api) {
-        Utils.montoyaApi = api;
+        Utilities.montoyaApi = api;
     }
 
     @Override
