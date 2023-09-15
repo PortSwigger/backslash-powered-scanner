@@ -7,6 +7,9 @@ import java.awt.event.ItemListener;
 import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import burp.api.montoya.BurpExtension;
+import burp.api.montoya.MontoyaApi;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -14,19 +17,23 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.*;
 
-public class BurpExtender implements IBurpExtender {
+public class BurpExtender implements IBurpExtender, BurpExtension {
     private static final String name = "Backslash Powered Scanner";
     private static final String version = "1.22";
     static DiffingScan diffscan = null;
 
     static SettingsBox settings = new SettingsBox();
 
+    public void initialize(MontoyaApi api) {
+        Utils.montoyaApi = api;
+    }
+
     @Override
     public void registerExtenderCallbacks(final IBurpExtenderCallbacks callbacks) {
         new Utilities(callbacks, new HashMap<>(), name);
         callbacks.setExtensionName(name);
 
-        settings.register("thorough mode", false, "Prioritise scan thoroughness over speed");
+        settings.register("thorough mode", true, "Prioritise scan thoroughness over speed");
         settings.register("skip unresponsive params", true, "Skip scanning parameters where sending a fuzz-string doesn't change the response");
         settings.register("ignore baseresponse", false, "Don't treat the selected request as a sample. Useful if it's old. ");
         settings.register("encode everything", false, "Perform heavier URL encoding on payloads");
@@ -37,13 +44,15 @@ public class BurpExtender implements IBurpExtender {
         settings.register("diff: HPP", true, "Scan for HTTP Parameter Pollution");
         settings.register("diff: HPP auto-followup", false, "If HPP is detected, automatically attempt to identify back-end parameters");
         settings.register("diff: syntax attacks", true);
-        settings.register("syntax: interpolation", false);
+        settings.register("syntax: interpolation", false, "Detects when ${ or %{ cause different responses. Prone to FPs from WAFs");
         settings.register("diff: value preserving attacks", true);
         settings.register("diff: iterable inputs", true, "Scan for numbers where incrementing has an interesting effect.");
         settings.register("diff: experimental concat attacks", false);
         settings.register("diff: experimental folder attacks", false, "Scan for Orange-style folder escapes. Somewhat unreliable.");
         settings.register("diff: magic value attacks", false, "Look for when configured keywords trigger different code-paths");
         settings.register("diff: magic values", "undefined,null,empty,none,COM1,c!C123449477,aA1537368460!", "Keywords that may trigger interesting code-paths. Try adding your own!");
+        settings.register("race-contamination", true, "Detects when synchronised requests cause response cross-contamination. Sometimes finds cache poisoning too.");
+        settings.register("race-interference", false, "Detects when synchronised requests make the response change. Useful as a starting point for detecting race conditions. Ensure 'params: dummy' is also enabled.");
         
         diffscan = new DiffingScan("diff-scan");
         // Scan ipscan = new MagicIPScan("ip-scan");

@@ -1,5 +1,6 @@
 package burp;
 
+
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
@@ -65,6 +66,8 @@ class DiffingScan extends ParamScan {
     }
 
     IScanIssue findReflectionIssues(IHttpRequestResponse baseRequestResponse, IScannerInsertionPoint insertionPoint) {
+
+        Interference.inteferenceScan(baseRequestResponse, insertionPoint);
         
         PayloadInjector injector = new PayloadInjector(baseRequestResponse, insertionPoint);
         String baseValue = insertionPoint.getBaseValue();
