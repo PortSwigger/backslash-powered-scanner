@@ -67,7 +67,7 @@ class DiffingScan extends ParamScan {
 
     IScanIssue findReflectionIssues(IHttpRequestResponse baseRequestResponse, IScannerInsertionPoint insertionPoint) {
 
-        Interference.inteferenceScan(baseRequestResponse, insertionPoint);
+        Interference.interferenceScan(baseRequestResponse, insertionPoint);
         
         PayloadInjector injector = new PayloadInjector(baseRequestResponse, insertionPoint);
         String baseValue = insertionPoint.getBaseValue();
