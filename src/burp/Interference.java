@@ -7,13 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Interference {
-    static List<IScanIssue> inteferenceScan(IHttpRequestResponse iHttpRequestResponse, IScannerInsertionPoint iScannerInsertionPoint) {
+    static List<IScanIssue> interferenceScan(IHttpRequestResponse iHttpRequestResponse, IScannerInsertionPoint iScannerInsertionPoint) {
 
 
         boolean checkForContamination = Utilities.globalSettings.getBoolean("race-contamination");
-        boolean checkForInteference = Utilities.globalSettings.getBoolean("race-interference");
+        boolean checkForInterference = Utilities.globalSettings.getBoolean("race-interference");
 
-        if (!checkForContamination && !checkForInteference) {
+        if (!checkForContamination && !checkForInterference) {
             return null;
         }
 
@@ -28,7 +28,7 @@ public class Interference {
         for (int i=0;i<3;i++) {
             HttpRequest montoyaReq = Utilities.buildMontoyaReq(Utilities.addCacheBuster(iScannerInsertionPoint.buildRequest((urlCanary + dynamicPrefix).getBytes()), urlCanary+dynamicPrefix), service);
             HttpRequestResponse reflectionCheck = Utilities.montoyaApi.http().sendRequest(montoyaReq);
-            if (reflectionCheck.response() == null || !reflectionCheck.response().contains(urlCanary, false) && !checkForInteference) {
+            if (reflectionCheck.response() == null || !reflectionCheck.response().contains(urlCanary, false) && !checkForInterference) {
                 return null;
             }
             baseline.add(new Resp(reflectionCheck));
