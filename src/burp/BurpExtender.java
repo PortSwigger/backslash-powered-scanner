@@ -1,5 +1,6 @@
 package burp;
 
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -7,9 +8,19 @@ import java.awt.event.ItemListener;
 import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.List;
 
 import burp.api.montoya.BurpExtension;
 import burp.api.montoya.MontoyaApi;
+import burp.api.montoya.ui.contextmenu.ContextMenuItemsProvider;
+import burp.api.montoya.websocket.WebSockets;
+import burp.api.montoya.websocket.extension.ExtensionWebSocketCreation;
+import burp.api.montoya.websocket.extension.ExtensionWebSocketCreationStatus;
+import burp.api.montoya.websocket.extension.ExtensionWebSocketMessageHandler;
+import burp.api.montoya.ui.contextmenu.WebSocketContextMenuEvent;
+import burp.api.montoya.ui.contextmenu.WebSocketMessage;
+import burp.api.montoya.websocket.BinaryMessage;
+import burp.api.montoya.websocket.TextMessage;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -19,17 +30,22 @@ import javax.swing.*;
 
 public class BurpExtender implements IBurpExtender, BurpExtension {
     private static final String name = "Backslash Powered Scanner";
-    private static final String version = "1.25";
+    private static final String version = "1.26";
+    private IBurpExtenderCallbacks callbacks;
     static DiffingScan diffscan = null;
 
     static SettingsBox settings = new SettingsBox();
 
     public void initialize(MontoyaApi api) {
         Utilities.montoyaApi = api;
+
+        // List<JFrame> frameList = new ArrayList<>();
+        Utilities.montoyaApi.userInterface().registerContextMenuItemsProvider(new OfferWsFuzz(callbacks));
     }
 
     @Override
     public void registerExtenderCallbacks(final IBurpExtenderCallbacks callbacks) {
+        this.callbacks = callbacks;
         new Utilities(callbacks, new HashMap<>(), name);
         callbacks.setExtensionName(name);
 
@@ -53,6 +69,9 @@ public class BurpExtender implements IBurpExtender, BurpExtension {
         settings.register("diff: magic values", "undefined,null,empty,none,COM1,c!C123449477,aA1537368460!", "Keywords that may trigger interesting code-paths. Try adding your own!");
         settings.register("race-contamination", true, "Detects when synchronised requests cause response cross-contamination. Sometimes finds cache poisoning too.");
         settings.register("race-interference", false, "Detects when synchronised requests make the response change. Useful as a starting point for detecting race conditions. Ensure 'params: dummy' is also enabled.");
+        
+        settings.register("ws: timeout", 5, "Seconds to wait before closing each connection");
+        settings.register("ws: pre-message", "", "Message(s) to send before each payload");
         
         diffscan = new DiffingScan("diff-scan");
         // Scan ipscan = new MagicIPScan("ip-scan");
@@ -338,6 +357,45 @@ class ParamGuesser implements Runnable, IExtensionStateListener {
         }
 
         return attacks;
+    }
+}
+
+class OfferWsFuzz implements ContextMenuItemsProvider {
+    private final IBurpExtenderCallbacks callbacks;
+    //private final List<JFrame> frameList;
+    
+    public OfferWsFuzz(IBurpExtenderCallbacks callbacks) {
+        this.callbacks = callbacks;
+    }
+
+    public List<Component> provideMenuItems(WebSocketContextMenuEvent event) {
+        JMenuItem sendToDiffScanMenuItem = new JMenuItem("diff-scan");
+        sendToDiffScanMenuItem.addActionListener(l -> performDiffScan(event));
+
+        JMenuItem sendToTransfScanMenuItem = new JMenuItem("transf-scan");
+        sendToTransfScanMenuItem.addActionListener(l -> performTransfScan(event));
+
+        return List.of(sendToDiffScanMenuItem, sendToTransfScanMenuItem);
+    }
+
+    private void performDiffScan(WebSocketContextMenuEvent event) {
+        event.messageEditorWebSocket().ifPresent(editorEvent -> {
+            WebSocketMessage webSocketMessage = editorEvent.webSocketMessage();
+            DiffingScan wsDiffingScan = new DiffingScan("diff-scan");
+            DiffingScan.setCallbacks(callbacks);
+            wsDiffingScan.setWSMessage(webSocketMessage);
+            //wsDiffingScan.findReflectionIssues(null, null); // this freezes burp until the scan is complete
+            new Thread(() -> wsDiffingScan.findReflectionIssues(null, null)).start();
+        });
+    }
+    
+    private void performTransfScan(WebSocketContextMenuEvent event) {
+        event.messageEditorWebSocket().ifPresent(editorEvent -> {
+            WebSocketMessage webSocketMessage = editorEvent.webSocketMessage();
+            TransformationScan wsTransformationScan = new TransformationScan(callbacks);
+            wsTransformationScan.setWSMessage(webSocketMessage);
+            new Thread(() -> wsTransformationScan.findTransformationIssues(null, null)).start();
+        });
     }
 
 }

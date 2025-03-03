@@ -1,18 +1,33 @@
 package burp;
 
-
-import org.apache.commons.lang3.StringUtils;
+import burp.api.montoya.MontoyaApi;
+import burp.api.montoya.ui.contextmenu.WebSocketMessage;
+import burp.api.montoya.http.message.HttpRequestResponse;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.*;
 
+import org.apache.commons.lang3.StringUtils;
 
 class DiffingScan extends ParamScan {
+    private WebSocketMessageImpl webSocketMessage;
+    private static IBurpExtenderCallbacks callbacks;
+    private static IExtensionHelpers helpers;
 
     public DiffingScan(String name) {
         super(name);
         scanSettings.importSettings(BurpExtender.settings);
+    }
+
+    public void setWSMessage(WebSocketMessage webSocketMessage) {
+        this.webSocketMessage = new WebSocketMessageImpl(webSocketMessage.payload(), webSocketMessage.direction(), webSocketMessage.upgradeRequest(), webSocketMessage.annotations(), BulkUtilities.globalSettings.getInt("ws: timeout"));
+    }
+
+    public static void setCallbacks(IBurpExtenderCallbacks callbacks) {
+        callbacks = callbacks;
+        helpers = callbacks.getHelpers();
     }
 
     private ArrayList<Attack> exploreAvailableFunctions(PayloadInjector injector, Attack basicAttack, String prefix, String suffix, boolean useRandomAnchor) {
@@ -66,22 +81,52 @@ class DiffingScan extends ParamScan {
     }
 
     IScanIssue findReflectionIssues(IHttpRequestResponse baseRequestResponse, IScannerInsertionPoint insertionPoint) {
-
-        Interference.interferenceScan(baseRequestResponse, insertionPoint);
-        
-        PayloadInjector injector = new PayloadInjector(baseRequestResponse, insertionPoint);
-        String baseValue = insertionPoint.getBaseValue();
+        String baseValue;  
         Attack softBase;
-        if (Utilities.globalSettings.getBoolean("ignore baseresponse")) {
-            softBase = new Attack();
-            softBase.addAttack(injector.buildAttack(baseValue, false));
+        PayloadInjector injector;
+
+        if (this.webSocketMessage == null) {
+            Interference.interferenceScan(baseRequestResponse, insertionPoint);
+
+            injector = new PayloadInjector(baseRequestResponse, insertionPoint);
+            baseValue = insertionPoint.getBaseValue();
+            
+            if (Utilities.globalSettings.getBoolean("ignore baseresponse")) {
+                softBase = new Attack();
+                softBase.addAttack(injector.buildAttack(baseValue, false));
+            } else {
+                softBase = new Attack(new Resp(baseRequestResponse));
+            }
         } else {
-            softBase = new Attack(new Resp(baseRequestResponse));
-        }
+            // interference scan skipped for websockets
+            
+            injector = new PayloadInjector(webSocketMessage);
+        
+            String basePayload = webSocketMessage.payload().toString();
+
+            int startI = basePayload.indexOf("FU");
+            int endI = basePayload.indexOf("ZZ");
+            baseValue = basePayload.substring(startI + 2, endI);
+        
+            if (Utilities.globalSettings.getBoolean("ignore baseresponse")) {
+                softBase = new Attack();
+                softBase.addAttack(injector.buildAttack(baseValue, false));
+            } else {
+                softBase = new Attack(webSocketMessage);
+            }
+
+            if (Utilities.globalSettings.getBoolean("ignore baseresponse")) {
+                softBase = new Attack();
+                softBase.addAttack(injector.buildAttack(baseValue, false));
+            } else {
+                softBase = new Attack(webSocketMessage);
+            }
+        } 
 
         ArrayList<Attack> results = new ArrayList<>();
 
-        if (Utilities.globalSettings.getBoolean("diff: HPP")) {
+        // hpp skipped for websockets
+        if (Utilities.globalSettings.getBoolean("diff: HPP") && (this.webSocketMessage == null)) {
             Probe backendParameterInjection = new Probe("Backend Parameter Injection", 2, "$zq=%3c%61%60%27%22%24%7b%7b%5c&zq%3d", "|zqy=x%3c%61%60%27%22%24%7b%7b%5c", "!zq=%3c%61%60%27%22%24%7b%7b%5c");
             backendParameterInjection.setEscapeStrings("%26zqy=%3c%61%60%27%22%24%7b%7b%5c", "%26zq=x%3c%61%60%27%22%24%7b%7b%5c"); // "#zq=%3c%61%60%27%22%24%7b%7b%5c"
             backendParameterInjection.setRandomAnchor(false);
@@ -116,7 +161,6 @@ class DiffingScan extends ParamScan {
         }
 
         if (Utilities.globalSettings.getBoolean("diff: syntax attacks") && !BulkUtilities.verySimilar(hardBase, crudeFuzz)) {
-            
             boolean worthTryingInjections = false;
             if (!Utilities.globalSettings.getBoolean("thorough mode")) {
                 Probe multiFuzz = new Probe("Basic fuzz", 0, "`z'z\"\\", "\\z`z'z\"\\");
@@ -234,8 +278,6 @@ class DiffingScan extends ParamScan {
                     }
                 }
 
-
-
                 // try to invoke a function
                 for (String[] injection : injectionSequence) {
                     String delim = injection[0];
@@ -285,12 +327,15 @@ class DiffingScan extends ParamScan {
             }
         }
 
-        boolean isInPath = Utilities.isInPath(insertionPoint);
-
+        boolean isInPath;
+        if (this.webSocketMessage == null) {
+            isInPath = Utilities.isInPath(insertionPoint);
+        } else {
+            isInPath = false;
+        }
 
         // does a request w/random input differ from the base request? (ie 'should I do soft attacks?')
         if (Utilities.globalSettings.getBoolean("diff: value preserving attacks") && !BulkUtilities.verySimilar(softBase, hardBase)) {
-
             if (Utilities.globalSettings.getBoolean("diff: experimental concat attacks") && Utilities.globalSettings.getBoolean("thorough mode")) {
                 String[] potential_delimiters = {"'", "\""};
                 String[] concatenators = {"||", "+", " ", "."};
@@ -370,7 +415,8 @@ class DiffingScan extends ParamScan {
                 }
             }
 
-            if (Utilities.mightBeOrderBy(insertionPoint.getInsertionPointName(), baseValue)) {
+            // i don't think its doable to get the insertion point name for websockets, just run it anyway
+            if ((this.webSocketMessage != null) || (insertionPoint != null && Utilities.mightBeOrderBy(insertionPoint.getInsertionPointName(), baseValue))) {
                 Probe comment = new Probe("Comment injection", 3, "/'z*/**/", "/*/*/z'*/", "/*z'/");
                 comment.setEscapeStrings("/*'z*/", "/**z'*/","/*//z'//*/");
                 comment.setRandomAnchor(false);
@@ -426,7 +472,8 @@ class DiffingScan extends ParamScan {
                 }
             }
 
-            if (Utilities.globalSettings.getBoolean("diff: experimental folder attacks")) {
+            // skip for websockets
+            if (Utilities.globalSettings.getBoolean("diff: experimental folder attacks") && (this.webSocketMessage == null)) {
                 String firstBlat = "z" + baseValue.substring(Math.min(baseValue.length(), 1));
                 String lastBlat = baseValue.substring(0, Math.max(baseValue.length() - 1, 0)) + "z";
                 Probe orangeSlash = new Probe("Possible Nginx alias escape", 4, baseValue + "..", baseValue + "../."); // get static 404
@@ -459,11 +506,11 @@ class DiffingScan extends ParamScan {
             }
         }
 
-        if (Utilities.globalSettings.getBoolean("diff: magic value attacks") && (!BulkUtilities.verySimilar(softBase, hardBase) || Utilities.globalSettings.getBoolean("thorough mode"))) {
+        // skip for websockets
+        if (Utilities.globalSettings.getBoolean("diff: magic value attacks") && (!BulkUtilities.verySimilar(softBase, hardBase) || Utilities.globalSettings.getBoolean("thorough mode")) && (this.webSocketMessage == null)) {
 
             String[] magicValues = Utilities.globalSettings.getString("diff: magic values").split(",");
 
-            Utilities.out("basevalue: "+baseValue);
             for (String magicValue: magicValues) {
                 if (baseValue.equals(magicValue)) {
                     continue;
@@ -495,9 +542,16 @@ class DiffingScan extends ParamScan {
                 results.addAll(injector.fuzz(softBase, functionCall));
             }
         }
-
+ 
         if (!results.isEmpty()) {
-            return BulkUtilities.reportReflectionIssue(results.toArray((new Attack[results.size()])), baseRequestResponse, "Interesting input handling", "The application reacts to inputs in a way that you may find interesting. The probes are listed below in chronological order, with evidence. Response attributes that only stay consistent in one probe-set are italicised, with the variable attribute starred. ");
+            if (this.webSocketMessage == null) {
+                return BulkUtilities.reportReflectionIssue(results.toArray((new Attack[results.size()])), baseRequestResponse, "Interesting input handling", "The application reacts to inputs in a way that you may find interesting. The probes are listed below in chronological order, with evidence. Response attributes that only stay consistent in one probe-set are italicised, with the variable attribute starred. ");
+            } else {
+                HttpRequestResponse upgradeRequest = Utilities.montoyaApi.http().sendRequest(webSocketMessage.upgradeRequest());
+                Resp upgradeRequest2 = new Resp(upgradeRequest);
+                IScanIssue issue = BulkUtilities.reportReflectionIssue(results.toArray((new Attack[results.size()])), upgradeRequest2, "Interesting input handling", "The application reacts to inputs in a way that you may find interesting. The probes are listed below in chronological order, with evidence. Response attributes that only stay consistent in one probe-set are italicised, with the variable attribute starred. ");
+                return issue;
+            }
         }
         else {
             return null;
@@ -555,7 +609,7 @@ class DiffingScan extends ParamScan {
         }
 
         String title = "Iterable input";
-        if (Utilities.globalSettings.getBoolean("include name in title")) {
+        if (Utilities.globalSettings.getBoolean("include name in title") && (this.webSocketMessage == null)) {
             title += " "+injector.getInsertionPoint().getInsertionPointName();
         }
 
