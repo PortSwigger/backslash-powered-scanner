@@ -71,6 +71,7 @@ public class BurpExtender implements IBurpExtender, BurpExtension {
         
         settings.register("ws: timeout", 5, "Seconds to wait before closing each connection");
         settings.register("ws: pre-message", "", "Message(s) to send before each payload");
+        settings.register("ws: timeout pre-payload", 0, "Milliseconds to wait before sending each payload");
         
         diffscan = new DiffingScan("diff-scan");
         // Scan ipscan = new MagicIPScan("ip-scan");
