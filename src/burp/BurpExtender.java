@@ -21,6 +21,7 @@ import burp.api.montoya.ui.contextmenu.WebSocketContextMenuEvent;
 import burp.api.montoya.ui.contextmenu.WebSocketMessage;
 import burp.api.montoya.websocket.BinaryMessage;
 import burp.api.montoya.websocket.TextMessage;
+import burp.api.montoya.core.ByteArray;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -382,16 +383,32 @@ class OfferWsFuzz implements ContextMenuItemsProvider {
             WebSocketMessage webSocketMessage = editorEvent.webSocketMessage();
             WsDiffingScan wsDiffingScan = new WsDiffingScan();
             WsDiffingScan.setCallbacks(callbacks);
-            //wsDiffingScan.findReflectionIssues(); // this freezes burp until the scan is complete
-            new Thread(() -> wsDiffingScan.findReflectionIssues(webSocketMessage)).start();
+            
+            List<String> insertionPoints = WsBulkUtilities.getInsertionPoints(webSocketMessage.payload().toString());
+
+            new Thread(() -> {
+                for (String insertionPoint : insertionPoints) {
+                    WebSocketMessageImpl baseMessage = new WebSocketMessageImpl(ByteArray.byteArray(insertionPoint), webSocketMessage.direction(), webSocketMessage.upgradeRequest(), webSocketMessage.annotations(), BulkUtilities.globalSettings.getInt("ws: timeout"));
+                    wsDiffingScan.findReflectionIssues(baseMessage);
+                }
+            }).start();
         });
     }
     
     private void performTransfScan(WebSocketContextMenuEvent event) {
         event.messageEditorWebSocket().ifPresent(editorEvent -> {
             WebSocketMessage webSocketMessage = editorEvent.webSocketMessage();
-            WsTransformationScan wsTransformationScan = new WsTransformationScan(callbacks);
-            new Thread(() -> wsTransformationScan.findTransformationIssues(webSocketMessage)).start();
+            WsTransformationScan wsTransformationScan = new WsTransformationScan();
+            WsTransformationScan.setCallbacks(callbacks);
+            
+            List<String> insertionPoints = WsBulkUtilities.getInsertionPoints(webSocketMessage.payload().toString());
+
+            new Thread(() -> {
+                for (String insertionPoint : insertionPoints) {
+                    WebSocketMessageImpl baseMessage = new WebSocketMessageImpl(ByteArray.byteArray(insertionPoint), webSocketMessage.direction(), webSocketMessage.upgradeRequest(), webSocketMessage.annotations(), BulkUtilities.globalSettings.getInt("ws: timeout"));
+                    wsTransformationScan.findTransformationIssues(baseMessage);
+                }
+            }).start();
         });
     }
 
