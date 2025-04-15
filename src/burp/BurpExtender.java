@@ -39,7 +39,7 @@ public class BurpExtender implements IBurpExtender, BurpExtension {
 
     public void initialize(MontoyaApi api) {
         Utilities.montoyaApi = api;
-
+        BulkUtilities.registerContextMenu();
         Utilities.montoyaApi.userInterface().registerContextMenuItemsProvider(new OfferWsFuzz(callbacks));
     }
 
