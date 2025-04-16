@@ -2,11 +2,11 @@ Uuid: 9cff8c55432a45808432e26dbb2b41d8
 ExtensionType: 1
 Name: Backslash Powered Scanner
 RepoName: backslash-powered-scanner
-ScreenVersion: 1.25
+ScreenVersion: 1.30
 SerialVersion: 28
 MinPlatformVersion: 12
 ProOnly: True
-Author: James 'albinowax' Kettle, PortSwigger Web Security
+Author: James Kettle, PortSwigger
 ShortDescription: Finds unknown classes of injection vulnerabilities.
 EntryPoint: build/libs/backslash-powered-scanner.jar
 BuildCommand: ./gradlew fatJar
