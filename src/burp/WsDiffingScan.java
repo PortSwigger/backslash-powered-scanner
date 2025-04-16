@@ -72,8 +72,8 @@ class WsDiffingScan {
         return attacks;
     }
 
-    IScanIssue findReflectionIssues(WebSocketMessage baseWebSocketMessage) {
-        WebSocketMessageImpl webSocketMessage = new WebSocketMessageImpl(baseWebSocketMessage.payload(), baseWebSocketMessage.direction(), baseWebSocketMessage.upgradeRequest(), baseWebSocketMessage.annotations(), BulkUtilities.globalSettings.getInt("ws: timeout"));
+    IScanIssue findReflectionIssues(WebSocketMessageImpl baseWebSocketMessage) {
+        WebSocketMessageImpl webSocketMessage = baseWebSocketMessage;
         
         // interference scan skipped
 
@@ -433,7 +433,7 @@ class WsDiffingScan {
         if (!results.isEmpty()) {
             HttpRequestResponse upgradeRequest = Utilities.montoyaApi.http().sendRequest(webSocketMessage.upgradeRequest());
             Resp upgradeRequest2 = new Resp(upgradeRequest);
-            IScanIssue issue = WsBulkUtilities.reportReflectionIssue(results.toArray((new WsAttack[results.size()])), upgradeRequest2, "Interesting input handling", "The application reacts to inputs in a way that you may find interesting. The probes are listed below in chronological order, with evidence. Response attributes that only stay consistent in one probe-set are italicised, with the variable attribute starred. ");
+            IScanIssue issue = WsBulkUtilities.reportReflectionIssue(results.toArray((new WsAttack[results.size()])), upgradeRequest2, "Interesting input handling", "The application reacts to inputs in a way that you may find interesting. The probes are listed below in chronological order, with evidence. Response attributes that only stay consistent in one probe-set are italicised, with the variable attribute starred. <br/><br/>" + webSocketMessage.payload().toString());
             return issue;
         }
         else {

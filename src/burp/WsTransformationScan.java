@@ -18,8 +18,11 @@ public class WsTransformationScan {
     private static IBurpExtenderCallbacks callbacks;
     private static IExtensionHelpers helpers;
 
-    public WsTransformationScan(final IBurpExtenderCallbacks callbacks) {
-        this.callbacks = callbacks;
+    public WsTransformationScan() {
+    }
+
+    public static void setCallbacks(IBurpExtenderCallbacks callbacks) {
+        callbacks = callbacks;
         helpers = callbacks.getHelpers();
     }
 
@@ -109,8 +112,8 @@ public class WsTransformationScan {
         return classifiedTransformations;
     }
 
-    public IScanIssue findTransformationIssues(WebSocketMessage baseWebSocketMessage) {
-        WebSocketMessageImpl webSocketMessage = new WebSocketMessageImpl(baseWebSocketMessage.payload(), baseWebSocketMessage.direction(), baseWebSocketMessage.upgradeRequest(), baseWebSocketMessage.annotations(), BulkUtilities.globalSettings.getInt("ws: timeout"));
+    public IScanIssue findTransformationIssues(WebSocketMessageImpl baseWebSocketMessage) {
+        WebSocketMessageImpl webSocketMessage = baseWebSocketMessage;
 
         String leftAnchor = Utilities.randomString(5);
         String rightAnchor = "z" + Utilities.randomString(2);
@@ -187,7 +190,7 @@ public class WsTransformationScan {
 
         HttpRequestResponse upgradeRequest = Utilities.montoyaApi.http().sendRequest(webSocketMessage.upgradeRequest());
         Resp upgradeRequestResp = new Resp(upgradeRequest);
-        InputTransformation issue = new InputTransformation(interesting, boring, upgradeRequestResp, helpers.analyzeRequest(upgradeRequestResp).getUrl(), "test");
+        InputTransformation issue = new InputTransformation(interesting, boring, upgradeRequestResp, helpers.analyzeRequest(upgradeRequestResp).getUrl(), webSocketMessage.payload().toString());
         Utilities.callbacks.addScanIssue(issue);
         return issue;
     }
